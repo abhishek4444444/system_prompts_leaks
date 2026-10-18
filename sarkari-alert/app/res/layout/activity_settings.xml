@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="vertical" android:background="@color/bg">
+
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="horizontal" android:gravity="center_vertical"
+        android:background="@color/primary" android:padding="12dp">
+        <TextView android:id="@+id/back" android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:text="←"
+            android:textColor="#FFFFFF" android:textSize="22sp"
+            android:paddingLeft="6dp" android:paddingRight="14dp"/>
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="@string/settings_title" android:textColor="#FFFFFF"
+            android:textSize="17sp" android:textStyle="bold"/>
+    </LinearLayout>
+
+    <ScrollView android:layout_width="match_parent" android:layout_height="0dp"
+        android:layout_weight="1" android:scrollbars="none">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="vertical" android:padding="12dp">
+
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="horizontal" android:background="@drawable/bg_card"
+                android:padding="14dp" android:gravity="center_vertical">
+                <LinearLayout android:layout_width="0dp" android:layout_weight="1"
+                    android:layout_height="wrap_content" android:orientation="vertical">
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:text="@string/daily_toggle" android:textSize="15sp"
+                        android:textColor="@color/text_main"/>
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:text="@string/daily_toggle_sub" android:textSize="12sp"
+                        android:textColor="@color/text_sub"/>
+                </LinearLayout>
+                <Switch android:id="@+id/daily_switch" android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"/>
+            </LinearLayout>
+
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="vertical" android:background="@drawable/bg_card"
+                android:padding="14dp" android:layout_marginTop="10dp">
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:text="@string/feeds_title" android:textSize="15sp"
+                    android:textColor="@color/text_main" android:textStyle="bold"/>
+                <LinearLayout android:id="@+id/feeds_container" android:layout_width="match_parent"
+                    android:layout_height="wrap_content" android:orientation="vertical"
+                    android:layout_marginTop="8dp"/>
+                <EditText android:id="@+id/feed_url" android:layout_width="match_parent"
+                    android:layout_height="wrap_content" android:hint="@string/feed_add_hint"
+                    android:textSize="13sp" android:maxLines="1" android:inputType="textUri"
+                    android:layout_marginTop="6dp"/>
+                <Button android:id="@+id/feed_add" android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" android:text="@string/feed_add"
+                    android:textColor="#FFFFFF" android:textSize="13sp"
+                    android:background="@drawable/bg_button_primary"
+                    android:paddingLeft="18dp" android:paddingRight="18dp"
+                    android:layout_marginTop="8dp"/>
+            </LinearLayout>
+
+            <Button android:id="@+id/reset_seed" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:text="@string/reset_seed"
+                android:textColor="@color/accent_dark" android:textSize="13sp"
+                android:background="@drawable/bg_button_outline" android:layout_marginTop="10dp"/>
+
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="vertical" android:background="@drawable/bg_card"
+                android:padding="14dp" android:layout_marginTop="10dp" android:layout_marginBottom="16dp">
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:text="@string/about_title" android:textSize="15sp"
+                    android:textColor="@color/text_main" android:textStyle="bold"/>
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:text="@string/about_text" android:textSize="13sp"
+                    android:textColor="@color/text_sub" android:lineSpacingExtra="3dp"
+                    android:layout_marginTop="6dp"/>
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

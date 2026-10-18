@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/bg">
+
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="vertical" android:background="@drawable/bg_header"
+        android:paddingLeft="16dp" android:paddingRight="16dp"
+        android:paddingTop="14dp" android:paddingBottom="14dp">
+
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:gravity="center_vertical">
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:orientation="vertical">
+                <TextView android:id="@+id/title" android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" android:text="@string/app_name_hi"
+                    android:textColor="#FFFFFF" android:textSize="22sp" android:textStyle="bold"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="@string/tagline" android:textColor="#C9D6E2" android:textSize="12sp"/>
+            </LinearLayout>
+            <Button android:id="@+id/btn_refresh" android:layout_width="wrap_content"
+                android:layout_height="wrap_content" android:text="@string/refresh"
+                android:textColor="#FFFFFF" android:textSize="13sp"
+                android:background="@drawable/bg_button_primary"
+                android:paddingLeft="16dp" android:paddingRight="16dp"/>
+        </LinearLayout>
+
+        <EditText android:id="@+id/search" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:hint="@string/search_hint"
+            android:textColorHint="#8FA5B8" android:textColor="#FFFFFF"
+            android:textSize="14sp" android:maxLines="1" android:inputType="text"
+            android:paddingTop="8dp" android:background="@null"/>
+
+        <HorizontalScrollView android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:scrollbars="none"
+            android:layout_marginTop="8dp">
+            <LinearLayout android:id="@+id/chips" android:layout_width="wrap_content"
+                android:layout_height="wrap_content" android:orientation="horizontal"/>
+        </HorizontalScrollView>
+
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:layout_marginTop="10dp">
+            <TextView android:id="@+id/tab_jobs" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="wrap_content" android:gravity="center"
+                android:text="@string/tab_jobs" android:textColor="#FFFFFF" android:textSize="14sp"
+                android:padding="8dp" android:textStyle="bold"/>
+            <TextView android:id="@+id/tab_saved" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="wrap_content" android:gravity="center"
+                android:text="@string/tab_saved" android:textColor="#9FB3C4" android:textSize="14sp"
+                android:padding="8dp"/>
+            <TextView android:id="@+id/tab_settings" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="wrap_content" android:gravity="center"
+                android:text="@string/tab_settings" android:textColor="#9FB3C4" android:textSize="14sp"
+                android:padding="8dp"/>
+        </LinearLayout>
+    </LinearLayout>
+
+    <FrameLayout android:layout_width="match_parent" android:layout_height="0dp"
+        android:layout_weight="1">
+        <ListView android:id="@+id/list" android:layout_width="match_parent"
+            android:layout_height="match_parent" android:divider="@color/divider"
+            android:dividerHeight="1dp" android:paddingLeft="10dp" android:paddingRight="10dp"
+            android:paddingTop="6dp" android:paddingBottom="6dp"
+            android:scrollbars="none" android:cacheColorHint="@android:color/transparent"/>
+        <TextView android:id="@+id/empty" android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:layout_gravity="center"
+            android:gravity="center" android:textSize="15sp" android:textColor="@color/text_sub"/>
+    </FrameLayout>
+
+    <TextView android:id="@+id/status" android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:textSize="11sp"
+        android:textColor="@color/text_sub" android:gravity="center"
+        android:paddingTop="5dp" android:paddingBottom="5dp"/>
+</LinearLayout>
