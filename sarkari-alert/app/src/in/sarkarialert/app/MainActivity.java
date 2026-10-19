@@ -89,6 +89,8 @@ public class MainActivity extends Activity {
         pullRing = (RefreshRing) findViewById(R.id.pull_ring);
         newPill = (TextView) findViewById(R.id.new_pill);
         btnRing.setColor(0xFFFFFFFF);
+        btnRing.setVisibility(View.GONE);   // clean idle: only the gradient disc shows
+        pullRing.setVisibility(View.GONE);
         setupPullToRefresh();
         newPill.setOnClickListener(new View.OnClickListener() {
             @Override

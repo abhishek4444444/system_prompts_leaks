@@ -69,6 +69,14 @@ public class Prefs {
         setSources(c, list.toArray(new String[list.size()]));
     }
 
+    public static boolean firstRun(Context c) {
+        return !sp(c).getBoolean("welcomed", false);
+    }
+
+    public static void setFirstRunDone(Context c) {
+        sp(c).edit().putBoolean("welcomed", true).apply();
+    }
+
     public static long lastSeen(Context c) {
         return sp(c).getLong("last_seen", 0L);
     }

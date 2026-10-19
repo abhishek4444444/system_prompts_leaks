@@ -36,6 +36,7 @@ public class RefreshRing extends View {
         paint.setStrokeWidth(dp(2.6f));
         paint.setStrokeCap(Paint.Cap.ROUND);
         paint.setColor(0xFFF4772E);
+        setVisibility(GONE); // nothing drawn until actually used — no stray arc
     }
 
     public void setColor(int color) {
@@ -45,12 +46,14 @@ public class RefreshRing extends View {
 
     public void setPull(float p) {
         pull = Math.max(0f, Math.min(1f, p));
+        setVisibility(pull > 0.01f ? VISIBLE : GONE);
         invalidate();
     }
 
     public void setSpinning(boolean s) {
         if (s == spinning) return;
         spinning = s;
+        setVisibility(s ? VISIBLE : GONE);
         if (s) {
             spin = ObjectAnimator.ofFloat(this, "rotation", 0f, 360f);
             spin.setDuration(850);
@@ -66,10 +69,12 @@ public class RefreshRing extends View {
 
     @Override
     protected void onDraw(Canvas canvas) {
-        float size = Math.min(getWidth(), getHeight()) - dp(4);
-        if (size <= 0) return;
-        RectF oval = new RectF(dp(2), dp(2), dp(2) + size, dp(2) + size);
-        float sweep = spinning ? 280f : 18f + pull * 262f;
+        if (getVisibility() != VISIBLE) return;
+        float size = Math.min(getWidth(), getHeight());
+        float inset = paint.getStrokeWidth() / 2f + dp(0.5f);
+        if (size - inset * 2 <= 0) return;
+        RectF oval = new RectF(inset, inset, size - inset, size - inset);
+        float sweep = spinning ? 300f : Math.max(24f, pull * 320f);
         canvas.drawArc(oval, -90f, sweep, false, paint);
     }
 
