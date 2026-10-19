@@ -7,7 +7,7 @@ Usage:
   package_sign.py verify <apk>
   package_sign.py genkey <dir>
 """
-import struct, sys, io, zipfile, hashlib, os
+import struct, sys, io, zipfile, hashlib, os, zlib
 
 MAGIC = b"APK Sig Block 42"
 V2_ID = 0x7109871A
@@ -17,6 +17,69 @@ CHUNK = 1048576
 def u32(v): return struct.pack("<I", v)
 def u64(v): return struct.pack("<Q", v)
 def lp(b): return u32(len(b)) + b
+
+def align_repack(base_bytes, dex_bytes, alignment=4):
+    """Rewrite the zip with every STORED entry 4-byte aligned (zipalign).
+    Alignment padding lives in each local header extra field (id 0xd935),
+    mirrored in the central directory. Deflated entries are re-deflated."""
+    zin = zipfile.ZipFile(io.BytesIO(base_bytes))
+    items = [(info, zin.read(info.filename)) for info in zin.infolist()]
+    if dex_bytes is not None:
+        items.append((None, dex_bytes))
+    out = io.BytesIO()
+    cd_parts = []
+    for info, data in items:
+        if info is not None:
+            name = info.filename.encode("utf-8")
+            method = info.compress_type
+            dt = info.date_time
+            ext_attr = info.external_attr
+        else:
+            name = b"classes.dex"
+            method = zipfile.ZIP_DEFLATED
+            dt = (2026, 10, 19, 0, 0, 0)
+            ext_attr = 0o644 << 16
+        if method == zipfile.ZIP_DEFLATED:
+            co = zlib.compressobj(9, zlib.DEFLATED, -15)
+            payload = co.compress(data) + co.flush()
+        else:
+            payload = data
+        crc = zlib.crc32(data) & 0xFFFFFFFF
+        dostime = ((dt[3] % 24) << 11) | ((dt[4] // 2) << 5) | ((dt[5] // 2) & 0x1F)
+        dosdate = ((dt[0] - 1980) << 9) | (dt[1] << 5) | (dt[2] & 0x1F)
+        lh_off = out.tell()
+        extra = b""
+        if method == 0:  # stored entries must start 4-aligned
+            pad = (alignment - ((lh_off + 30 + len(name)) % alignment)) % alignment
+            if pad < 4:
+                pad += alignment
+            extra = struct.pack("<HH", 0xD935, pad - 4) + b"\x00" * (pad - 4)
+        out.write(struct.pack("<IHHHHHIIIHH", 0x04034B50, 20, 0, method,
+                              dostime, dosdate, crc, len(payload), len(data),
+                              len(name), len(extra)))
+        out.write(name + extra + payload)
+        cd_parts.append(struct.pack("<IHHHHHHIIIHHHHHII", 0x02014B50, 20, 20, 0,
+                                    method, dostime, dosdate, crc, len(payload),
+                                    len(data), len(name), len(extra), 0, 0, 0,
+                                    ext_attr, lh_off) + name + extra)
+    cd_off = out.tell()
+    for c in cd_parts:
+        out.write(c)
+    cd_size = out.tell() - cd_off
+    n = len(cd_parts)
+    out.write(struct.pack("<IHHHHIIH", 0x06054B50, 0, 0, n, n, cd_size, cd_off, 0))
+    return out.getvalue()
+
+def check_alignment(data, alignment=4):
+    z = zipfile.ZipFile(io.BytesIO(data))
+    bad = []
+    for info in z.infolist():
+        if info.compress_type == 0:
+            nlen, elen = struct.unpack_from("<HH", data, info.header_offset + 26)
+            off = info.header_offset + 30 + nlen + elen
+            if off % alignment:
+                bad.append(info.filename)
+    return bad
 
 def find_eocd(data):
     idx = data.rfind(b"PK\x05\x06")
@@ -44,6 +107,9 @@ def content_digest(regions):
     return h.digest()
 
 def repack(base_bytes, dex_bytes):
+    return align_repack(base_bytes, dex_bytes)
+
+def repack_unaligned(base_bytes, dex_bytes):
     zin = zipfile.ZipFile(io.BytesIO(base_bytes))
     out = io.BytesIO()
     zout = zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED)
@@ -175,8 +241,11 @@ def verify(path):
     sig = sigs_blob[12: 12 + sig_len]
     assert entry_len == 4 + 4 + sig_len, "signature entry format"
     pub.verify(sig, signed_data, padding.PKCS1v15(), hashes.SHA256())
+    bad = check_alignment(data)
+    assert not bad, "misaligned stored entries after signing: %s" % bad
     print("OK: APK Signature Scheme v2 verified (id=0x%x, alg=0x%x, %d bytes sig)"
           % (pair_id, sig_alg, len(sig)))
+    print("zipalign: all stored entries 4-byte aligned")
     print("block: [%d, %d), cd@%d, eocd@%d" % (block_start, cd_off_final - 0, cd_off_final, eocd_idx))
 
 def main():
@@ -187,9 +256,11 @@ def main():
         base = open(sys.argv[2], "rb").read()
         dex = open(sys.argv[3], "rb").read() if sys.argv[3] != "-" else None
         packed = repack(base, dex)
+        bad = check_alignment(packed)
+        assert not bad, "misaligned stored entries: %s" % bad
         signed = sign(packed, sys.argv[4], sys.argv[5])
         open(sys.argv[6], "wb").write(signed)
-        print("packed+signed ->", sys.argv[6], "(%d bytes)" % len(signed))
+        print("packed+aligned+signed ->", sys.argv[6], "(%d bytes)" % len(signed))
     elif cmd == "verify":
         verify(sys.argv[2])
     else:
