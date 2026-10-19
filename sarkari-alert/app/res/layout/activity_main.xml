@@ -101,7 +101,7 @@
 
         <in.sarkarialert.app.RefreshRing android:id="@+id/pull_ring"
             android:layout_width="38dp" android:layout_height="38dp"
-            android:layout_gravity="center_horizontal" android:translationY="-64dp"
+            android:layout_gravity="center_horizontal" android:translationY="-38dp"
             android:visibility="gone" android:elevation="6dp"/>
 
         <TextView android:id="@+id/new_pill" android:layout_width="wrap_content"

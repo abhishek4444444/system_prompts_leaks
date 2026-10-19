@@ -16,6 +16,7 @@ import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.DecelerateInterpolator;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.widget.AdapterView;
@@ -222,12 +223,18 @@ public class MainActivity extends Activity {
         ui.removeCallbacks(ticker);
     }
 
-    /** YouTube-style pull gesture on the list: elastic ring, release to refresh */
+    /** Material-style pull: the content drags with your finger, an arrow-tipped
+     *  ring grows in the gap that opens, pops + ticks at the trigger, then the
+     *  release springs into the indeterminate spin. */
     private void setupPullToRefresh() {
+        final float slop = dp(10);
+        final float trigger = dp(56);  // ring travel needed to arm
+        final float maxDrag = dp(120); // rubber-band ceiling
+        final float resist = dp(80);   // rubber-band stiffness
         list.setOnTouchListener(new View.OnTouchListener() {
             float startY;
-            boolean pulling;
-            float pullPx;
+            boolean pulling, wasArmed;
+            float drag;
 
             @Override
             public boolean onTouch(View v, MotionEvent ev) {
@@ -235,39 +242,51 @@ public class MainActivity extends Activity {
                     case MotionEvent.ACTION_DOWN:
                         startY = ev.getY();
                         pulling = false;
+                        wasArmed = false;
                         break;
                     case MotionEvent.ACTION_MOVE: {
                         boolean atTop = list.getFirstVisiblePosition() == 0
                                 && (list.getChildAt(0) == null
                                     || list.getChildAt(0).getTop() >= 0);
                         float dy = ev.getY() - startY;
-                        if (!pulling && atTop && dy > dp(14) && !refreshing) {
+                        if (!pulling && atTop && dy > slop && !refreshing) {
                             pulling = true;
-                            pullRing.bringToFront(); // draw above every card
+                            pullRing.animate().cancel();
+                            list.animate().cancel();
+                            pullRing.bringToFront(); // always above the cards
+                            pullRing.setAlpha(0f);
+                            pullRing.setVisibility(View.VISIBLE);
                         }
                         if (pulling) {
-                            pullPx = Math.max(0, dy - dp(14)) / 2f; // rubber band
-                            float max = dp(92);
-                            if (pullPx > max) pullPx = max;
-                            pullRing.setVisibility(View.VISIBLE);
-                            pullRing.setAlpha(1f);
-                            pullRing.setTranslationY(-dp(64) + pullPx);
-                            pullRing.setPull(pullPx / max);
+                            float over = Math.max(0f, dy - slop);
+                            drag = maxDrag * (1f - 1f / (over / resist + 1f)); // rubber band
+                            float travel = Math.min(drag, trigger);
+                            pullRing.setAlpha(Math.max(0f, Math.min(1f,
+                                    (drag - dp(12)) / dp(20))));
+                            pullRing.setTranslationY(-dp(38) + travel);
+                            pullRing.setPull(drag / trigger);
+                            list.setTranslationY(drag * 0.5f); // content follows the finger
+                            boolean armedNow = drag >= trigger;
+                            if (armedNow != wasArmed) {
+                                wasArmed = armedNow;
+                                if (armedNow) tick();
+                            }
                             return true;
                         }
                         break;
                     }
                     case MotionEvent.ACTION_UP:
+                        if (pulling) {
+                            pulling = false;
+                            if (drag >= trigger && !refreshing) beginPullRefresh();
+                            else springBack();
+                            return true;
+                        }
+                        break;
                     case MotionEvent.ACTION_CANCEL:
                         if (pulling) {
                             pulling = false;
-                            if (pullPx >= dp(62) && !refreshing) {
-                                pullRing.setSpinning(true);
-                                pullRing.animate().translationY(-dp(10)).setDuration(180).start();
-                                doRefresh();
-                            } else {
-                                collapsePull();
-                            }
+                            springBack();
                             return true;
                         }
                         break;
@@ -277,16 +296,47 @@ public class MainActivity extends Activity {
         });
     }
 
-    private void collapsePull() {
-        pullRing.setSpinning(false);
-        pullRing.setPull(0);
-        pullRing.animate().translationY(-dp(64)).alpha(0f).setDuration(200)
+    /** Released past the trigger: park the ring below the header, offset the
+     *  content, and spin while the fetch runs. */
+    private void beginPullRefresh() {
+        pullRing.startSpin();
+        pullRing.animate().translationY(dp(4)).setDuration(220)
+                .setInterpolator(new DecelerateInterpolator(1.6f)).start();
+        list.animate().translationY(dp(50)).setDuration(260)
+                .setInterpolator(new DecelerateInterpolator(1.6f)).start();
+        doRefresh();
+    }
+
+    /** Released too early: everything eases back to rest. */
+    private void springBack() {
+        list.animate().translationY(0f).setDuration(260)
+                .setInterpolator(new DecelerateInterpolator(1.8f)).start();
+        pullRing.setPull(0f);
+        pullRing.animate().translationY(-dp(38)).alpha(0f).setDuration(200)
+                .setInterpolator(new DecelerateInterpolator(1.4f))
                 .withEndAction(new Runnable() {
                     @Override
                     public void run() {
                         pullRing.setVisibility(View.GONE);
+                        pullRing.setAlpha(1f);
                     }
                 }).start();
+    }
+
+    /** Short confirmation buzz when the pull arms (VIBRATE permission held). */
+    private void tick() {
+        try {
+            android.os.Vibrator vib =
+                    (android.os.Vibrator) getSystemService(VIBRATOR_SERVICE);
+            if (vib == null) return;
+            if (Build.VERSION.SDK_INT >= 26) {
+                vib.vibrate(android.os.VibrationEffect.createOneShot(18,
+                        android.os.VibrationEffect.DEFAULT_AMPLITUDE));
+            } else {
+                vib.vibrate(18);
+            }
+        } catch (Exception ignored) {
+        }
     }
 
     private void showNewPillIfAny() {
@@ -488,13 +538,7 @@ public class MainActivity extends Activity {
         NetWatcher.uiListener = new Runnable() {
             @Override
             public void run() {
-                refreshing = false;
-                btnRing.setSpinning(false);
-                collapsePull();
-                if (mode == MODE_WATCH) loadWatch();
-                else reloadAlerts();
-                showNewPillIfAny();
-                updateStatus(null);
+                onRefreshDone();
             }
         };
         NetWatcher.refreshOnce(this);
@@ -502,17 +546,22 @@ public class MainActivity extends Activity {
         ui.postDelayed(new Runnable() {
             @Override
             public void run() {
-                if (refreshing) {
-                    refreshing = false;
-                    btnRing.setSpinning(false);
-                    collapsePull();
-                    if (mode == MODE_WATCH) loadWatch();
-                    else reloadAlerts();
-                    showNewPillIfAny();
-                    updateStatus(null);
-                }
+                if (refreshing) onRefreshDone();
             }
         }, 12000);
+    }
+
+    private void onRefreshDone() {
+        if (!refreshing) return;
+        refreshing = false;
+        btnRing.setSpinning(false);
+        pullRing.finishSpin(); // completes circle + fades; no-op if not spinning
+        list.animate().translationY(0f).setDuration(240)
+                .setInterpolator(new DecelerateInterpolator(1.6f)).start();
+        if (mode == MODE_WATCH) loadWatch();
+        else reloadAlerts();
+        showNewPillIfAny();
+        updateStatus(null);
     }
 
     private float dp(float v) {
