@@ -2,7 +2,14 @@
 
 Sarkari naukri, exam aur online form ke alerts — ek hi Android app me, Hindi UI ke saath, bina ads.
 
-**Final APK:** `dist/SarkariAlert-v1.0.3.apk` (~100 KB) — [GitHub Release se download karo](https://github.com/abhishek4444444/system_prompts_leaks/releases/tag/v1.0) ya is repo ke `sarkari-alert/dist/` folder se lo.
+**Final APK:** `dist/SarkariAlert-v1.7.2.apk` — [Direct APK download](https://github.com/abhishek4444444/system_prompts_leaks/raw/arena/a1750f33-system-prompts-leaks/sarkari-alert/dist/SarkariAlert-v1.7.2.apk) ya is repo ke `sarkari-alert/dist/` folder se lo.
+
+## What's new in v1.7.2 — image generation reliability + downloads
+
+- Image generation no longer depends on one failing Pollinations path. It now tries an authenticated Pollinations key if supplied, the correctly encoded anonymous legacy endpoint, the user's dynamically discovered Gemini image models, and finally AI Horde's free anonymous queue.
+- Provider errors are shown with their real HTTP/API reason. The misleading "try a shorter English prompt" text is gone — a short 7–8 word prompt is fine.
+- Generated images have a visible **⬇ Download image** button (tapping the picture also works) and save as PNG files in `Pictures/SarkariAlert`.
+- Live progress is shown while providers switch or while an AI Horde job is queued/drawing; the stop button cancels the queued job too.
 
 ## Features
 

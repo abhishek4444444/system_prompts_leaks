@@ -222,9 +222,13 @@
     <string name="ai_skills">🎯 Skills</string>
     <string name="ai_new_chat">＋ New</string>
     <string name="ai_image_chip">🎨 Image</string>
-    <string name="ai_image_desc">Describe the image first, then tap 🎨</string>
-    <string name="ai_image_gen">🎨 Generating your image… (10–30s)</string>
-    <string name="ai_image_fail">🎨 Image generation failed: %s\n\nTry a shorter English prompt.</string>
+    <string name="ai_image_desc">Describe the image first, then tap 🎨 or Send</string>
+    <string name="ai_image_gen">🎨 Generating your image…</string>
+    <string name="ai_image_fail">🎨 Image generation failed:\n%s\n\nThis is a provider or network error, not your prompt length. Check the connection and try again.</string>
+    <string name="ai_image_download">⬇ Download image</string>
+    <string name="ai_image_saved">Image saved: %s</string>
+    <string name="ai_image_save_failed">Could not save image: %s</string>
+    <string name="ai_image_permission">Storage permission is needed to save the image.</string>
     <string name="ai_copied">Copied</string>
     <string name="settings_skills_row">Skills (AI personas)</string>
 </resources>

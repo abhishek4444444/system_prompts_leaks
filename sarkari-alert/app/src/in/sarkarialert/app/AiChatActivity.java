@@ -1,10 +1,16 @@
 package in.sarkarialert.app;
 
 import android.app.Activity;
+import android.content.ContentValues;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
+import android.media.MediaScannerConnection;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.text.Html;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,9 +22,14 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.net.URLEncoder;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Built-in AI assistant powered by the user's own free Google AI Studio
@@ -45,6 +56,7 @@ public class AiChatActivity extends Activity {
     private View setup, chatArea;
     private boolean busy;
     private volatile boolean imgCancelled;
+    private Bitmap pendingSave;
 
     private Alert alert;          // context: alert from a notification
     private String ctxUrl, ctxTitle, ctxSnippet; // context: page from the browser
@@ -78,6 +90,9 @@ public class AiChatActivity extends Activity {
         });
         findViewById(R.id.ai_new).setOnClickListener(new View.OnClickListener() {
             @Override public void onClick(View v) {
+                Llm.cancel();
+                ImageGen.cancel();
+                imgCancelled = true;
                 msgs.clear();
                 busy = false;
                 String hello = alert != null ? getString(R.string.ai_hello_alert)
@@ -156,7 +171,7 @@ public class AiChatActivity extends Activity {
         buildChips();
         findViewById(R.id.ai_send).setOnClickListener(new View.OnClickListener() {
             @Override public void onClick(View v) {
-                if (busy) { Llm.cancel(); imgCancelled = true; }
+                if (busy) { Llm.cancel(); ImageGen.cancel(); imgCancelled = true; }
                 else send(input.getText().toString());
             }
         });
@@ -358,7 +373,7 @@ public class AiChatActivity extends Activity {
         return p.length() < 3 ? (raw == null ? "" : raw.trim()) : p;
     }
 
-    /** 🎨 text-to-image via Pollinations (free, no key) — 3 endpoints, first success wins */
+    /** 🎨 text-to-image: several providers, live status and real error details */
     private void generateImage(final String prompt, String display) {
         if (busy) return;
         msgs.add(new Msg("user", display, false));
@@ -368,52 +383,161 @@ public class AiChatActivity extends Activity {
         list.smoothScrollToPosition(msgs.size() - 1);
         busy = true;
         imgCancelled = false;
+        ImageGen.begin();
         sendIcon.setImageResource(R.drawable.ic_stop);
+        final String storedKeys = Prefs.apiKey(this);
         new Thread(new Runnable() {
             @Override public void run() {
-                String enc = prompt;
-                try { enc = URLEncoder.encode(prompt, "UTF-8"); } catch (Exception ignored) { }
-                int seed = (int) (System.currentTimeMillis() % 100000);
-                String[] urls = {
-                    "https://gen.pollinations.ai/image/" + enc
-                        + "?model=flux&width=768&height=768&seed=" + seed,
-                    "https://gen.pollinations.ai/image/" + enc
-                        + "?width=768&height=768&seed=" + seed,
-                    "https://image.pollinations.ai/prompt/" + enc
-                        + "?width=768&height=768&model=flux&nologo=true&seed=" + seed
-                };
-                Bitmap found = null;
-                String lastErr = "network error";
-                for (int i = 0; i < urls.length && found == null && !imgCancelled; i++) {
-                    try {
-                        byte[] bytes = WebApi.getBytes(urls[i]);
-                        if (bytes != null && bytes.length > 0) {
-                            Bitmap b = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
-                            if (b != null) found = b;
-                            else lastErr = "bad image data";
-                        }
-                    } catch (Exception e) {
-                        lastErr = e.getMessage() == null ? "network error" : e.getMessage();
-                    }
-                }
+                final StringBuilder errors = new StringBuilder();
+                Bitmap found = ImageGen.generate(storedKeys, prompt,
+                        new ImageGen.Progress() {
+                            @Override public void update(final String message) {
+                                runOnUiThread(new Runnable() {
+                                    @Override public void run() {
+                                        if (!imgCancelled && msgs.contains(work)) {
+                                            work.text = message;
+                                            adapter.notifyDataSetChanged();
+                                        }
+                                    }
+                                });
+                            }
+                        }, errors);
                 final Bitmap fb = found;
-                final String fe = lastErr;
+                final String fe = errors.length() > 0 ? errors.toString()
+                        : "• No image provider returned a usable image.";
                 runOnUiThread(new Runnable() {
                     @Override public void run() {
                         busy = false;
                         sendIcon.setImageResource(R.drawable.ic_send);
-                        if (imgCancelled) {
+                        if (imgCancelled || ImageGen.isCancelled()) {
                             work.text = "⏹ Stopped.";
                         } else if (fb != null) {
                             work.text = "🎨 Here's your image:";
                             Msg im = new Msg("ai", "[generated image]", false);
                             im.img = fb;
-                            msgs.add(msgs.indexOf(work) + 1, im);
+                            int pos = msgs.indexOf(work);
+                            if (pos >= 0) msgs.add(pos + 1, im);
                         } else {
                             work.text = getString(R.string.ai_image_fail, fe);
                         }
                         adapter.notifyDataSetChanged();
-                        list.smoothScrollToPosition(msgs.size() - 1);
+                        if (msgs.size() > 0) {
+                            list.smoothScrollToPosition(msgs.size() - 1);
+                        }
+                    }
+                });
+            }
+        }).start();
+    }
+
+    /** ⬇ Save a generated image into Pictures/SarkariAlert. */
+    private void saveGeneratedImage(Bitmap bmp) {
+        if (bmp == null) return;
+        if (Build.VERSION.SDK_INT < 29
+                && checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                        != PackageManager.PERMISSION_GRANTED) {
+            pendingSave = bmp;
+            requestPermissions(new String[]{
+                    android.Manifest.permission.WRITE_EXTERNAL_STORAGE}, 72);
+            Toast.makeText(this, R.string.ai_image_permission, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        doSaveGeneratedImage(bmp);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                                           int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode != 72) return;
+        Bitmap bmp = pendingSave;
+        pendingSave = null;
+        if (bmp != null && grantResults.length > 0
+                && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            doSaveGeneratedImage(bmp);
+        } else {
+            Toast.makeText(this, R.string.ai_image_permission, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void doSaveGeneratedImage(final Bitmap bmp) {
+        new Thread(new Runnable() {
+            @Override public void run() {
+                Uri inserted = null;
+                String savedWhere = "";
+                Exception failure = null;
+                try {
+                    String filename = "SarkariAlert-IMG-"
+                            + new SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US)
+                                    .format(new Date()) + ".png";
+                    if (Build.VERSION.SDK_INT >= 29) {
+                        ContentValues values = new ContentValues();
+                        values.put(MediaStore.Images.Media.DISPLAY_NAME, filename);
+                        values.put(MediaStore.Images.Media.MIME_TYPE, "image/png");
+                        values.put("relative_path",
+                                Environment.DIRECTORY_PICTURES + "/SarkariAlert");
+                        values.put("is_pending", 1);
+                        inserted = getContentResolver().insert(
+                                MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+                        if (inserted == null) {
+                            throw new Exception("MediaStore did not create an image entry.");
+                        }
+                        OutputStream out = getContentResolver().openOutputStream(inserted);
+                        if (out == null) throw new Exception("Could not open the image file.");
+                        try {
+                            if (!bmp.compress(Bitmap.CompressFormat.PNG, 100, out)) {
+                                throw new Exception("Could not encode the PNG image.");
+                            }
+                        } finally {
+                            out.close();
+                        }
+                        ContentValues done = new ContentValues();
+                        done.put("is_pending", 0);
+                        getContentResolver().update(inserted, done, null, null);
+                        savedWhere = "Pictures/SarkariAlert/" + filename;
+                    } else {
+                        File dir = new File(Environment.getExternalStoragePublicDirectory(
+                                Environment.DIRECTORY_PICTURES), "SarkariAlert");
+                        if (!dir.exists() && !dir.mkdirs()) {
+                            throw new Exception("Could not create the Pictures/SarkariAlert folder.");
+                        }
+                        File file = new File(dir, filename);
+                        FileOutputStream out = new FileOutputStream(file);
+                        try {
+                            if (!bmp.compress(Bitmap.CompressFormat.PNG, 100, out)) {
+                                throw new Exception("Could not encode the PNG image.");
+                            }
+                        } finally {
+                            out.close();
+                        }
+                        MediaScannerConnection.scanFile(AiChatActivity.this,
+                                new String[]{file.getAbsolutePath()},
+                                new String[]{"image/png"}, null);
+                        savedWhere = file.getAbsolutePath();
+                    }
+                } catch (Exception e) {
+                    failure = e;
+                    if (inserted != null) {
+                        try { getContentResolver().delete(inserted, null, null); }
+                        catch (Exception ignored) { }
+                    }
+                }
+
+                final String where = savedWhere;
+                final Exception fe = failure;
+                runOnUiThread(new Runnable() {
+                    @Override public void run() {
+                        if (fe == null) {
+                            Toast.makeText(AiChatActivity.this,
+                                    getString(R.string.ai_image_saved, where),
+                                    Toast.LENGTH_LONG).show();
+                        } else {
+                            String message = fe.getMessage() == null
+                                    ? fe.getClass().getSimpleName() : fe.getMessage();
+                            Toast.makeText(AiChatActivity.this,
+                                    getString(R.string.ai_image_save_failed, message),
+                                    Toast.LENGTH_LONG).show();
+                        }
                     }
                 });
             }
@@ -537,7 +661,17 @@ public class AiChatActivity extends Activity {
                     }
                 });
             } else if (type == 3) {
-                ((android.widget.ImageView) v.findViewById(R.id.m_img)).setImageBitmap(m.img);
+                android.widget.ImageView imageView =
+                        (android.widget.ImageView) v.findViewById(R.id.m_img);
+                imageView.setImageBitmap(m.img);
+                View.OnClickListener download = new View.OnClickListener() {
+                    @Override public void onClick(View b) {
+                        saveGeneratedImage(m.img);
+                    }
+                };
+                imageView.setOnClickListener(download);
+                View downloadButton = v.findViewById(R.id.m_download);
+                if (downloadButton != null) downloadButton.setOnClickListener(download);
             } else if (type == 0) {
                 ((TextView) v.findViewById(R.id.m_text)).setText(m.text);
             } else {
