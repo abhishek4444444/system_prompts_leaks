@@ -29,10 +29,15 @@
                 android:textSize="11sp" android:textStyle="bold"/>
         </LinearLayout>
 
+        <TextView android:id="@+id/brain_new" android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:text="@string/ai_new_chat"
+            android:textColor="#FFD9C2" android:textSize="12sp" android:textStyle="bold"
+            android:background="@drawable/bg_row_ripple" android:padding="6dp"/>
         <TextView android:id="@+id/brain_cloud" android:layout_width="wrap_content"
             android:layout_height="wrap_content" android:text="@string/brain_cloud"
             android:textColor="#FFD9C2" android:textSize="12sp" android:textStyle="bold"
-            android:background="@drawable/bg_row_ripple" android:padding="8dp"/>
+            android:background="@drawable/bg_row_ripple" android:padding="8dp"
+            android:layout_marginLeft="4dp"/>
     </LinearLayout>
 
     <ListView android:id="@+id/brain_list" android:layout_width="match_parent"
@@ -50,21 +55,22 @@
             android:paddingBottom="8dp"/>
     </HorizontalScrollView>
 
-    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:orientation="horizontal" android:gravity="bottom"
+    <FrameLayout android:layout_width="match_parent" android:layout_height="wrap_content"
         android:paddingLeft="10dp" android:paddingRight="10dp" android:paddingBottom="10dp">
-        <EditText android:id="@+id/brain_input" android:layout_width="0dp"
-            android:layout_weight="1" android:layout_height="wrap_content"
-            android:hint="@string/brain_hint" android:textSize="14sp"
-            android:maxLines="4" android:inputType="textMultiLine|textCapSentences"
-            android:background="@drawable/bg_input" android:padding="12dp"/>
-        <FrameLayout android:id="@+id/brain_send" android:layout_width="46dp"
-            android:layout_height="46dp" android:layout_marginLeft="8dp"
-            android:background="@drawable/bg_send"
+        <EditText android:id="@+id/brain_input" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:hint="@string/brain_hint"
+            android:textSize="14sp" android:maxLines="4"
+            android:inputType="textMultiLine|textCapSentences"
+            android:background="@drawable/bg_input" android:padding="12dp"
+            android:paddingRight="58dp"/>
+        <FrameLayout android:id="@+id/brain_send" android:layout_width="40dp"
+            android:layout_height="40dp" android:layout_gravity="right|center_vertical"
+            android:layout_marginRight="6dp" android:background="@drawable/bg_send"
             android:foreground="@drawable/bg_row_ripple" android:clickable="true"
             android:focusable="true" android:contentDescription="Send">
-            <ImageView android:layout_width="20dp" android:layout_height="20dp"
-                android:layout_gravity="center" android:src="@drawable/ic_send"/>
+            <ImageView android:id="@+id/brain_send_icon" android:layout_width="18dp"
+                android:layout_height="18dp" android:layout_gravity="center"
+                android:src="@drawable/ic_send"/>
         </FrameLayout>
-    </LinearLayout>
+    </FrameLayout>
 </LinearLayout>

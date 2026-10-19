@@ -2,6 +2,8 @@ package in.sarkarialert.app;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.text.Html;
 import android.view.View;
@@ -14,6 +16,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,6 +31,7 @@ public class AiChatActivity extends Activity {
         String role;   // "user" or "ai"
         String text;
         boolean html;
+        Bitmap img;    // generated image payload
         Msg(String role, String text, boolean html) {
             this.role = role; this.text = text; this.html = html;
         }
@@ -37,6 +41,7 @@ public class AiChatActivity extends Activity {
     private ChatAdapter adapter;
     private ListView list;
     private EditText input;
+    private android.widget.ImageView sendIcon;
     private View setup, chatArea;
     private boolean busy;
 
@@ -56,6 +61,7 @@ public class AiChatActivity extends Activity {
 
         list = (ListView) findViewById(R.id.ai_list);
         input = (EditText) findViewById(R.id.ai_input);
+        sendIcon = (android.widget.ImageView) findViewById(R.id.ai_send_icon);
         setup = findViewById(R.id.ai_setup);
         chatArea = findViewById(R.id.ai_chat);
         adapter = new ChatAdapter();
@@ -67,6 +73,18 @@ public class AiChatActivity extends Activity {
         findViewById(R.id.ai_skills).setOnClickListener(new View.OnClickListener() {
             @Override public void onClick(View v) {
                 startActivity(new Intent(AiChatActivity.this, SkillsActivity.class));
+            }
+        });
+        findViewById(R.id.ai_new).setOnClickListener(new View.OnClickListener() {
+            @Override public void onClick(View v) {
+                msgs.clear();
+                busy = false;
+                String hello = alert != null ? getString(R.string.ai_hello_alert)
+                        : ctxUrl != null ? getString(R.string.ai_hello_page)
+                        : getString(R.string.ai_hello);
+                msgs.add(new Msg("ai", hello, false));
+                sendIcon.setImageResource(R.drawable.ic_send);
+                adapter.notifyDataSetChanged();
             }
         });
 
@@ -136,7 +154,10 @@ public class AiChatActivity extends Activity {
         }
         buildChips();
         findViewById(R.id.ai_send).setOnClickListener(new View.OnClickListener() {
-            @Override public void onClick(View v) { send(input.getText().toString()); }
+            @Override public void onClick(View v) {
+                if (busy) Llm.cancel();
+                else send(input.getText().toString());
+            }
         });
         adapter.notifyDataSetChanged();
     }
@@ -146,7 +167,8 @@ public class AiChatActivity extends Activity {
         box.removeAllViews();
         String[] labels = {getString(R.string.ai_quick_what), getString(R.string.ai_quick_explain),
                 getString(R.string.ai_quick_summary), getString(R.string.ai_quick_info),
-                getString(R.string.ai_quick_hindi), getString(R.string.ai_quick_local)};
+                getString(R.string.ai_quick_hindi), getString(R.string.ai_quick_local),
+                getString(R.string.ai_image_chip)};
         for (String label : labels) {
             TextView chip = new TextView(this);
             chip.setText(label);
@@ -163,6 +185,7 @@ public class AiChatActivity extends Activity {
                 @Override public void onClick(View v) {
                     String t = ((TextView) v).getText().toString();
                     if (t.equals(getString(R.string.ai_quick_local))) sendLocal();
+                    else if (t.equals(getString(R.string.ai_image_chip))) sendImage();
                     else send(t);
                 }
             });
@@ -176,6 +199,7 @@ public class AiChatActivity extends Activity {
         input.setText("");
         msgs.add(new Msg("user", question, false));
         adapter.notifyDataSetChanged();
+        sendIcon.setImageResource(R.drawable.ic_stop);
 
         final String key = Prefs.apiKey(this);
         if (key.length() == 0) {
@@ -205,7 +229,10 @@ public class AiChatActivity extends Activity {
             @Override public void done(String reply, String err) {
                 busy = false;
                 msgs.remove(typing);
-                if (err != null) {
+                sendIcon.setImageResource(R.drawable.ic_send);
+                if (Llm.wasStopped(err)) {
+                    msgs.add(new Msg("ai", "⏹ Stopped.", false));
+                } else if (err != null) {
                     msgs.add(new Msg("ai", err, false));
                 } else {
                     String clean = stripFences(reply);
@@ -231,6 +258,59 @@ public class AiChatActivity extends Activity {
         msgs.add(new Msg("ai", OfflineBrain.answer(q, alert, this), false));
         adapter.notifyDataSetChanged();
         list.smoothScrollToPosition(msgs.size() - 1);
+    }
+
+    /** 🎨 text-to-image via Pollinations (free Flux model, no key needed) */
+    private void sendImage() {
+        if (busy) return;
+        final String prompt = input.getText().toString().trim();
+        if (prompt.length() == 0) {
+            Toast.makeText(this, R.string.ai_image_desc, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        input.setText("");
+        msgs.add(new Msg("user", "🎨 " + prompt, false));
+        final Msg work = new Msg("ai", getString(R.string.ai_image_gen), false);
+        msgs.add(work);
+        adapter.notifyDataSetChanged();
+        list.smoothScrollToPosition(msgs.size() - 1);
+        busy = true;
+        sendIcon.setImageResource(R.drawable.ic_stop);
+        new Thread(new Runnable() {
+            @Override public void run() {
+                try {
+                    String url = "https://image.pollinations.ai/prompt/"
+                            + URLEncoder.encode(prompt, "UTF-8")
+                            + "?width=768&height=768&nologo=true&model=flux";
+                    final byte[] bytes = WebApi.getBytes(url);
+                    final Bitmap bmp = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                    runOnUiThread(new Runnable() {
+                        @Override public void run() {
+                            busy = false;
+                            sendIcon.setImageResource(R.drawable.ic_send);
+                            if (bmp == null) {
+                                work.text = getString(R.string.ai_image_fail, "bad image data");
+                            } else {
+                                work.text = null;
+                                work.img = bmp;
+                            }
+                            adapter.notifyDataSetChanged();
+                            list.smoothScrollToPosition(msgs.size() - 1);
+                        }
+                    });
+                } catch (final Exception e) {
+                    runOnUiThread(new Runnable() {
+                        @Override public void run() {
+                            busy = false;
+                            sendIcon.setImageResource(R.drawable.ic_send);
+                            work.text = getString(R.string.ai_image_fail,
+                                    e.getMessage() == null ? "network error" : e.getMessage());
+                            adapter.notifyDataSetChanged();
+                        }
+                    });
+                }
+            }
+        }).start();
     }
 
     /** light markdown: bold, bullets, headings — rendered in the bubbles */
@@ -311,10 +391,11 @@ public class AiChatActivity extends Activity {
         @Override public Object getItem(int position) { return msgs.get(position); }
         @Override public long getItemId(int position) { return position; }
 
-        @Override public int getViewTypeCount() { return 3; }
+        @Override public int getViewTypeCount() { return 4; }
         @Override public int getItemViewType(int position) {
             Msg m = msgs.get(position);
             if (m.role.equals("user")) return 0;
+            if (m.img != null) return 3;
             return m.html ? 2 : 1;
         }
 
@@ -326,10 +407,29 @@ public class AiChatActivity extends Activity {
             if (v == null) {
                 if (type == 0) v = getLayoutInflater().inflate(R.layout.item_msg_user, parent, false);
                 else if (type == 1) v = getLayoutInflater().inflate(R.layout.item_msg_ai, parent, false);
+                else if (type == 3) v = getLayoutInflater().inflate(R.layout.item_msg_img, parent, false);
                 else v = getLayoutInflater().inflate(R.layout.item_msg_info, parent, false);
             }
-            if (type <= 1) {
-                ((TextView) v.findViewById(R.id.m_text)).setText(md(m.text));
+            if (type == 1) {
+                TextView tv = (TextView) v.findViewById(R.id.m_text);
+                tv.setText(md(m.text));
+                // long-press any AI reply to copy it (ChatGPT-style)
+                v.setOnLongClickListener(new View.OnLongClickListener() {
+                    @Override public boolean onLongClick(View b) {
+                        try {
+                            android.content.ClipboardManager cm =
+                                (android.content.ClipboardManager) getSystemService(android.content.Context.CLIPBOARD_SERVICE);
+                            cm.setText(m.text);
+                            Toast.makeText(AiChatActivity.this,
+                                    R.string.ai_copied, Toast.LENGTH_SHORT).show();
+                        } catch (Exception ignored) { }
+                        return true;
+                    }
+                });
+            } else if (type == 3) {
+                ((android.widget.ImageView) v.findViewById(R.id.m_img)).setImageBitmap(m.img);
+            } else if (type == 0) {
+                ((TextView) v.findViewById(R.id.m_text)).setText(m.text);
             } else {
                 Button view = (Button) v.findViewById(R.id.m_view);
                 view.setOnClickListener(new View.OnClickListener() {

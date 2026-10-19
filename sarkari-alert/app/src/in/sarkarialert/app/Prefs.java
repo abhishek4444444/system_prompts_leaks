@@ -153,8 +153,11 @@ public class Prefs {
             String content = o.optString("content", "").trim();
             if (content.length() == 0) continue;
             if (n == 0) {
-                sb.append("ACTIVE SKILLS installed by the user — follow them precisely ");
-                sb.append("for tone, style, format and behavior in every answer:\n\n");
+                sb.append("The user has installed the following SKILLS. For EVERY request, ");
+                sb.append("decide which skill(s) are relevant to the need and adopt them fully — ");
+                sb.append("their persona, tone, style, format and behavior rules OVERRIDE your ");
+                sb.append("defaults wherever they apply. Ignore a skill only when it clearly ");
+                sb.append("does not fit the current request:\n\n");
             }
             sb.append("[SKILL: ").append(o.optString("name", "skill")).append("]\n");
             sb.append(content.length() > 4000 ? content.substring(0, 4000) + "…" : content);

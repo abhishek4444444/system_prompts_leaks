@@ -220,5 +220,11 @@
     <string name="skills_deleted">Skill deleted</string>
     <string name="skills_need_both">Both a name and content are required</string>
     <string name="ai_skills">🎯 Skills</string>
+    <string name="ai_new_chat">＋ New</string>
+    <string name="ai_image_chip">🎨 Image</string>
+    <string name="ai_image_desc">Describe the image first, then tap 🎨</string>
+    <string name="ai_image_gen">🎨 Generating your image… (10–30s)</string>
+    <string name="ai_image_fail">🎨 Image generation failed: %s\n\nTry a shorter English prompt.</string>
+    <string name="ai_copied">Copied</string>
     <string name="settings_skills_row">Skills (AI personas)</string>
 </resources>

@@ -40,7 +40,23 @@ final class Llm {
 
     private static final Handler UI = new Handler(Looper.getMainLooper());
 
+    private static volatile boolean cancelled;
+    private static volatile HttpURLConnection active;
+
     private Llm() { }
+
+    /** user pressed stop — abort the in-flight request */
+    static void cancel() {
+        cancelled = true;
+        HttpURLConnection c = active;
+        if (c != null) {
+            try { c.disconnect(); } catch (Exception ignored) { }
+        }
+    }
+
+    static boolean wasStopped(String err) {
+        return "STOPPED".equals(err);
+    }
 
     // ---- provider detection ----
 
@@ -91,6 +107,7 @@ final class Llm {
                     final List<String[]> history, final StreamCb cb) {
         new Thread(new Runnable() {
             @Override public void run() {
+                cancelled = false;
                 List<String[]> pool = pool(stored);
                 if (pool.isEmpty()) {
                     deliverErr(cb, "No AI key configured. Settings → AI key.");
@@ -98,6 +115,7 @@ final class Llm {
                 }
                 String err = null;
                 for (int i = 0; i < pool.size(); i++) {
+                    if (cancelled) { deliverErr(cb, "STOPPED"); return; }
                     String[] pk = pool.get(i);
                     if (i > 0) {
                         note(cb, "⏳ " + pretty(pool.get(i - 1)[0])
@@ -231,6 +249,7 @@ final class Llm {
                         if (code == 400) break; // model rejected params — next model
                         return lastErr;         // 401/403 — switch key
                     }
+                    if (cancelled) { conn.disconnect(); return "STOPPED"; }
                     String type = conn.getContentType() == null ? "" : conn.getContentType();
                     if (type.contains("application/json")) {
                         JSONObject root = new JSONObject(drain(conn.getInputStream()));
@@ -249,6 +268,7 @@ final class Llm {
                             break;
                         }
                     }
+                    if (cancelled) return "STOPPED";
                     if (out.length() > 0) {
                         synchronized (Llm.class) { gModel = model; gModelAt = System.currentTimeMillis(); }
                         deliverDone(cb, out.toString());
@@ -334,6 +354,7 @@ final class Llm {
                 HttpURLConnection conn = openPost(baseOf(provider) + "/chat/completions",
                         body.toString(), "Authorization", "Bearer " + key);
                 int code = conn.getResponseCode();
+                if (cancelled) { conn.disconnect(); return "STOPPED"; }
                 if (code >= 400) {
                     WebApi.HttpError he = new WebApi.HttpError(code, drain(conn.getErrorStream()));
                     conn.disconnect();
@@ -363,6 +384,7 @@ final class Llm {
                         return "Connection lost before any reply.";
                     }
                 }
+                if (cancelled) return "STOPPED";
                 if (out.length() > 0) {
                     deliverDone(cb, out.toString());
                     return null;
@@ -390,6 +412,7 @@ final class Llm {
         conn.setRequestProperty("Accept", "text/event-stream, application/json");
         conn.setRequestProperty(authName, authValue);
         conn.setDoOutput(true);
+        active = conn;
         OutputStream os = conn.getOutputStream();
         os.write(json.getBytes("UTF-8"));
         os.flush();
@@ -406,6 +429,7 @@ final class Llm {
             long lastPost = 0;
             String line;
             while ((line = r.readLine()) != null) {
+                if (cancelled) return false;
                 if (!line.startsWith("data:")) continue;
                 String data = line.substring(5).trim();
                 if (data.length() == 0 || data.equals("[DONE]")) continue;

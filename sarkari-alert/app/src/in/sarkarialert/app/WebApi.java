@@ -30,6 +30,32 @@ final class WebApi {
         return call("POST", surl, json, apiKey);
     }
 
+    /** binary fetch (used by the image generator) */
+    static byte[] getBytes(String surl) throws Exception {
+        HttpURLConnection conn = (HttpURLConnection) new URL(surl).openConnection();
+        try {
+            conn.setConnectTimeout(15000);
+            conn.setReadTimeout(90000);
+            conn.setInstanceFollowRedirects(true);
+            conn.setRequestProperty("User-Agent",
+                    "Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Mobile Safari/537.36");
+            int code = conn.getResponseCode();
+            if (code >= 400) throw new Exception("HTTP " + code);
+            java.io.ByteArrayOutputStream bo = new java.io.ByteArrayOutputStream();
+            java.io.InputStream in = conn.getInputStream();
+            byte[] buf = new byte[8192];
+            int n, total = 0;
+            while ((n = in.read(buf)) > 0 && total < 8 * 1024 * 1024) {
+                bo.write(buf, 0, n);
+                total += n;
+            }
+            in.close();
+            return bo.toByteArray();
+        } finally {
+            conn.disconnect();
+        }
+    }
+
     private static String call(String method, String surl, String json, String apiKey) throws Exception {
         HttpURLConnection conn = (HttpURLConnection) new URL(surl).openConnection();
         try {

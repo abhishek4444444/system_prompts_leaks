@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
+import android.widget.ImageView;
 import android.os.Looper;
 import android.view.View;
 import android.view.ViewGroup;
@@ -34,7 +35,11 @@ public class LocalAiActivity extends Activity {
     private ChatAdapter adapter;
     private ListView list;
     private EditText input;
+    private ImageView sendIcon;
     private boolean typingAnim;
+    private Msg curWork;
+    private String curFull;
+    private Runnable revealRun;
     private final Handler ui = new Handler(Looper.getMainLooper());
 
     @Override
@@ -44,6 +49,7 @@ public class LocalAiActivity extends Activity {
 
         list = (ListView) findViewById(R.id.brain_list);
         input = (EditText) findViewById(R.id.brain_input);
+        sendIcon = (ImageView) findViewById(R.id.brain_send_icon);
         adapter = new ChatAdapter();
         list.setAdapter(adapter);
 
@@ -55,8 +61,22 @@ public class LocalAiActivity extends Activity {
                 startActivity(new Intent(LocalAiActivity.this, AiChatActivity.class));
             }
         });
+        findViewById(R.id.brain_new).setOnClickListener(new View.OnClickListener() {
+            @Override public void onClick(View v) {
+                if (revealRun != null) ui.removeCallbacks(revealRun);
+                typingAnim = false;
+                curWork = null;
+                msgs.clear();
+                msgs.add(new Msg("ai", OfflineBrain.greeting()));
+                sendIcon.setImageResource(R.drawable.ic_send);
+                adapter.notifyDataSetChanged();
+            }
+        });
         findViewById(R.id.brain_send).setOnClickListener(new View.OnClickListener() {
-            @Override public void onClick(View v) { send(input.getText().toString()); }
+            @Override public void onClick(View v) {
+                if (typingAnim) stopReveal();
+                else send(input.getText().toString());
+            }
         });
 
         buildChips();
@@ -110,6 +130,7 @@ public class LocalAiActivity extends Activity {
                         : null,
                 this);
         typingAnim = true;
+        sendIcon.setImageResource(R.drawable.ic_stop);
         // 1) animated dots
         final String[] dots = {"•", "• •", "• • •"};
         work.text = dots[0];
@@ -130,8 +151,10 @@ public class LocalAiActivity extends Activity {
 
     /** stream the answer word-by-word — feels alive, costs nothing */
     private void reveal(final Msg work, final String full) {
+        curWork = work;
+        curFull = full;
         final String[] parts = full.trim().split("(?<=\\s)");
-        ui.postDelayed(new Runnable() {
+        revealRun = new Runnable() {
             int i = 1;
             @Override public void run() {
                 StringBuilder sb = new StringBuilder();
@@ -146,9 +169,20 @@ public class LocalAiActivity extends Activity {
                     ui.postDelayed(this, 26);
                 } else {
                     typingAnim = false;
+                    sendIcon.setImageResource(R.drawable.ic_send);
                 }
             }
-        }, 120);
+        };
+        ui.postDelayed(revealRun, 120);
+    }
+
+    /** ⏹ stop pressed: finish the reply instantly */
+    private void stopReveal() {
+        if (revealRun != null) ui.removeCallbacks(revealRun);
+        if (curWork != null && curFull != null) curWork.text = curFull;
+        typingAnim = false;
+        sendIcon.setImageResource(R.drawable.ic_send);
+        adapter.notifyDataSetChanged();
     }
 
     private class ChatAdapter extends BaseAdapter {
@@ -168,6 +202,21 @@ public class LocalAiActivity extends Activity {
                         ? R.layout.item_msg_user : R.layout.item_msg_ai, parent, false);
             }
             ((TextView) v.findViewById(R.id.m_text)).setText(msgs.get(position).text);
+            if (type == 1) {
+                final String txt = msgs.get(position).text;
+                v.setOnLongClickListener(new View.OnLongClickListener() {
+                    @Override public boolean onLongClick(View b) {
+                        try {
+                            android.content.ClipboardManager cm =
+                                (android.content.ClipboardManager) getSystemService(android.content.Context.CLIPBOARD_SERVICE);
+                            cm.setText(txt);
+                            android.widget.Toast.makeText(LocalAiActivity.this,
+                                    R.string.ai_copied, android.widget.Toast.LENGTH_SHORT).show();
+                        } catch (Exception ignored) { }
+                        return true;
+                    }
+                });
+            }
             return v;
         }
     }
