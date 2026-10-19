@@ -21,7 +21,7 @@ echo "[2/5] aapt2 link -> base.apk + R.java"
 
 echo "[3/5] ECJ compile java"
 find "$APP/src" "$OUT/gen" -name "*.java" | sort > "$OUT/sources.txt"
-"$JAVA" -jar "$ECJ" -source 1.7 -target 1.7 -nowarn \
+"$JAVA" -jar "$ECJ" -source 1.7 -target 1.7 -nowarn -encoding UTF-8 \
     -bootclasspath "$ANDROID_JAR" \
     -d "$OUT/classes" @"$OUT/sources.txt"
 

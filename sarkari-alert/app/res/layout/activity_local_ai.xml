@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="vertical" android:background="@color/bg">
+
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="horizontal" android:gravity="center_vertical"
+        android:background="@drawable/bg_header" android:paddingLeft="12dp"
+        android:paddingRight="10dp" android:paddingTop="12dp" android:paddingBottom="14dp">
+
+        <ImageView android:id="@+id/back" android:layout_width="40dp"
+            android:layout_height="40dp" android:src="@drawable/ic_chevron_left"
+            android:padding="8dp" android:background="@drawable/bg_row_ripple"
+            android:contentDescription="Back"/>
+
+        <FrameLayout android:layout_width="44dp" android:layout_height="44dp"
+            android:background="@drawable/bg_ai_orb">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:layout_gravity="center" android:text="🧠" android:textSize="20sp"/>
+        </FrameLayout>
+
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_weight="1" android:orientation="vertical" android:layout_marginLeft="10dp">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="@string/brain_title" android:textColor="#FFFFFF"
+                android:textSize="17sp" android:textStyle="bold"/>
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="@string/brain_sub" android:textColor="#9FE6B8"
+                android:textSize="11sp" android:textStyle="bold"/>
+        </LinearLayout>
+
+        <TextView android:id="@+id/brain_cloud" android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:text="@string/brain_cloud"
+            android:textColor="#FFD9C2" android:textSize="12sp" android:textStyle="bold"
+            android:background="@drawable/bg_row_ripple" android:padding="8dp"/>
+    </LinearLayout>
+
+    <ListView android:id="@+id/brain_list" android:layout_width="match_parent"
+        android:layout_height="0dp" android:layout_weight="1"
+        android:divider="@android:color/transparent" android:dividerHeight="8dp"
+        android:padding="10dp" android:scrollbars="none"
+        android:cacheColorHint="@android:color/transparent"
+        android:stackFromBottom="true" android:transcriptMode="alwaysScroll"/>
+
+    <HorizontalScrollView android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:scrollbars="none"
+        android:paddingLeft="10dp" android:paddingRight="10dp">
+        <LinearLayout android:id="@+id/brain_chips" android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:orientation="horizontal"
+            android:paddingBottom="8dp"/>
+    </HorizontalScrollView>
+
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="horizontal" android:gravity="bottom"
+        android:paddingLeft="10dp" android:paddingRight="10dp" android:paddingBottom="10dp">
+        <EditText android:id="@+id/brain_input" android:layout_width="0dp"
+            android:layout_weight="1" android:layout_height="wrap_content"
+            android:hint="@string/brain_hint" android:textSize="14sp"
+            android:maxLines="4" android:inputType="textMultiLine|textCapSentences"
+            android:background="@drawable/bg_input" android:padding="12dp"/>
+        <FrameLayout android:id="@+id/brain_send" android:layout_width="46dp"
+            android:layout_height="46dp" android:layout_marginLeft="8dp"
+            android:background="@drawable/bg_send"
+            android:foreground="@drawable/bg_row_ripple" android:clickable="true"
+            android:focusable="true" android:contentDescription="Send">
+            <ImageView android:layout_width="20dp" android:layout_height="20dp"
+                android:layout_gravity="center" android:src="@drawable/ic_send"/>
+        </FrameLayout>
+    </LinearLayout>
+</LinearLayout>

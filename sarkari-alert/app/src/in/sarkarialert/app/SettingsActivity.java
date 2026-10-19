@@ -81,7 +81,7 @@ public class SettingsActivity extends Activity {
 
         findViewById(R.id.row_ai).setOnClickListener(new View.OnClickListener() {
             @Override public void onClick(View v) {
-                startActivity(new Intent(SettingsActivity.this, AiChatActivity.class));
+                startActivity(new Intent(SettingsActivity.this, LocalAiActivity.class));
             }
         });
         findViewById(R.id.row_translate).setOnClickListener(new View.OnClickListener() {

@@ -184,7 +184,6 @@
     <string name="browser_menu_desktop_prefix">Desktop site</string>
     <string name="browser_menu_share">Share page (sends site URL)</string>
     <string name="browser_menu_external">Open in browser app</string>
-    <string name="ai_quick_neural">🧠 Neural (beta)</string>
     <string name="ai_neural_start">🧠 Loading local neural model — first time downloads ~100 MB (one time), then instant &amp; offline…</string>
     <string name="ai_neural_empty">🧠 The local model returned nothing — try again, or use ⚡ Local instant.</string>
     <string name="ai_neural_err">🧠 Local model error: %s\n\nTip: use ⚡ Local instant, or add a cloud key in Settings (auto-detects Groq / Gemini / DeepSeek / OpenAI).</string>
@@ -200,4 +199,9 @@
     <string name="settings_ai_save">Save key</string>
     <string name="settings_ai_saved">AI key saved</string>
     <string name="settings_tools_title">TOOLS</string>
+    <string name="brain_title">Sarkari Brain</string>
+    <string name="brain_sub">100%% local · 0%% internet</string>
+    <string name="brain_cloud">☁ Cloud</string>
+    <string name="brain_hint">Kuch bhi poocho… (offline)</string>
+    <string name="settings_ai_row">AI Assistant</string>
 </resources>

@@ -22,17 +22,13 @@
                 android:layout_weight="1" android:layout_height="wrap_content"
                 android:textSize="11sp" android:textColor="#9FB4C9"
                 android:layout_marginLeft="10dp" android:maxLines="1" android:ellipsize="end"/>
-            <FrameLayout android:id="@+id/neural_host" android:layout_width="match_parent"
-        android:layout_height="1dp"/>
-</LinearLayout>
+        </LinearLayout>
         <TextView android:id="@+id/ai_detail" android:layout_width="wrap_content"
             android:layout_height="wrap_content" android:text="@string/ai_details_action"
             android:textColor="#FFD9C2" android:textSize="12sp" android:textStyle="bold"
             android:background="@drawable/bg_row_ripple" android:padding="6dp"
             android:visibility="gone"/>
-        <FrameLayout android:id="@+id/neural_host" android:layout_width="match_parent"
-        android:layout_height="1dp"/>
-</LinearLayout>
+    </LinearLayout>
 
     <LinearLayout android:id="@+id/ai_setup" android:layout_width="match_parent"
         android:layout_height="0dp" android:layout_weight="1"
@@ -62,16 +58,12 @@
                 android:layout_height="wrap_content" android:text="@string/ai_save_start"
                 android:textSize="12sp" android:textColor="#FFFFFF"
                 android:background="@drawable/bg_button_primary" android:layout_marginLeft="8dp"/>
-            <FrameLayout android:id="@+id/neural_host" android:layout_width="match_parent"
-        android:layout_height="1dp"/>
-</LinearLayout>
+        </LinearLayout>
         <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
             android:text="@string/ai_setup_privacy" android:textSize="11sp"
             android:textColor="@color/text_sub" android:layout_marginTop="12dp"
             android:lineSpacingExtra="2dp"/>
-        <FrameLayout android:id="@+id/neural_host" android:layout_width="match_parent"
-        android:layout_height="1dp"/>
-</LinearLayout>
+    </LinearLayout>
 
     <LinearLayout android:id="@+id/ai_chat" android:layout_width="match_parent"
         android:layout_height="0dp" android:layout_weight="1"
@@ -108,12 +100,6 @@
                 <ImageView android:layout_width="20dp" android:layout_height="20dp"
                     android:layout_gravity="center" android:src="@drawable/ic_send"/>
             </FrameLayout>
-            <FrameLayout android:id="@+id/neural_host" android:layout_width="match_parent"
-        android:layout_height="1dp"/>
-</LinearLayout>
-        <FrameLayout android:id="@+id/neural_host" android:layout_width="match_parent"
-        android:layout_height="1dp"/>
-</LinearLayout>
-    <FrameLayout android:id="@+id/neural_host" android:layout_width="match_parent"
-        android:layout_height="1dp"/>
+        </LinearLayout>
+    </LinearLayout>
 </LinearLayout>
