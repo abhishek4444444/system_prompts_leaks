@@ -68,20 +68,21 @@ public class NotificationUtil {
     /** the alert opens straight into the AI assistant, with a Details action */
     public static void notifyNewAlert(Context ctx, Alert a) {
         ensureChannels(ctx);
-        String body = "";
+        // rich multi-line body: everything we know about the alert, not just one field
+        StringBuilder sb = new StringBuilder();
+        if (a.posts != null && a.posts.length() > 0) sb.append(a.posts).append("\n");
+        if (a.qualification != null && a.qualification.length() > 0) sb.append("Qualification: ").append(a.qualification).append("\n");
         if (a.lastDate != null && a.lastDate.length() >= 10) {
             int d = AlarmScheduler.daysUntil(a.lastDate);
-            body = d >= 0
-                    ? ctx.getString(R.string.last_date_label, AlarmScheduler.prettyDate(a.lastDate))
-                    : "";
+            if (d >= 0) sb.append("Last date: ").append(AlarmScheduler.prettyDate(a.lastDate)).append("\n");
         }
-        if (body.length() == 0 && a.posts.length() > 0) body = a.posts;
-        if (body.length() == 0 && a.org.length() > 0) body = a.org;
+        if (a.org != null && a.org.length() > 0) sb.append(a.org);
+        String body = sb.toString().trim();
         if (body.length() == 0) body = ctx.getString(R.string.notif_fallback);
         Notification n = base(ctx, CH_UPDATES)
                 .setSmallIcon(R.drawable.ic_stat)
                 .setContentTitle(a.title)
-                .setContentText(body)
+                .setContentText(body.indexOf("\n") > 0 ? body.substring(0, body.indexOf('\n')) : body)
                 .setStyle(new Notification.BigTextStyle().bigText(body))
                 .setContentIntent(openAi(ctx, a.id))
                 .addAction(new Notification.Action.Builder(

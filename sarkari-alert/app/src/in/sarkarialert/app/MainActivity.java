@@ -33,7 +33,8 @@ import java.util.List;
 public class MainActivity extends Activity {
 
     private static final String[] CAT_CODES = {"all", "railway", "ssc", "upsc", "banking",
-            "defence", "police", "teaching", "state", "psu"};
+            "defence", "police", "teaching", "state", "psu", "scheme", "scholarship",
+            "result", "admit"};
 
     private static final int MODE_JOBS = 0, MODE_SAVED = 1, MODE_WATCH = 2;
 

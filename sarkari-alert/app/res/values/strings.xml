@@ -80,6 +80,11 @@
     <string name="cat_state">State</string>
     <string name="cat_psu">PSU</string>
     <string name="cat_other">Other</string>
+    <string name="cat_scheme">Schemes</string>
+    <string name="cat_scholarship">Scholarship</string>
+    <string name="cat_result">Results</string>
+    <string name="cat_admit">Admit Card</string>
+    <string name="dev_tag">Video editor by profession — app developer by passion</string>
     <string name="cat_news">Updates</string>
     <string name="cat_job">Jobs</string>
     <string name="tab_watch">Watch</string>

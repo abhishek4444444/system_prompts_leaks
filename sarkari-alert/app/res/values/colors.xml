@@ -31,4 +31,8 @@
     <color name="cat_job">#475569</color>
     <color name="cat_other">#64748B</color>
     <color name="cat_news">#0891B2</color>
+    <color name="cat_scheme">#2E7D32</color>
+    <color name="cat_scholarship">#8E24AA</color>
+    <color name="cat_result">#00838F</color>
+    <color name="cat_admit">#D84315</color>
 </resources>

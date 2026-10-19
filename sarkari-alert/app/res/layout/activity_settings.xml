@@ -20,7 +20,81 @@
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
             android:orientation="vertical" android:padding="12dp">
 
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="vertical" android:background="@drawable/bg_dev_card"
+                android:padding="16dp">
+
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="horizontal" android:gravity="center_vertical">
+                    <FrameLayout android:layout_width="54dp" android:layout_height="54dp"
+                        android:background="@drawable/bg_disc_ai">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:layout_gravity="center" android:text="AK" android:textColor="#FFFFFF"
+                            android:textSize="18sp" android:textStyle="bold"/>
+                    </FrameLayout>
+                    <LinearLayout android:layout_width="0dp" android:layout_weight="1"
+                        android:layout_height="wrap_content" android:orientation="vertical"
+                        android:layout_marginLeft="14dp">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="@string/dev_title" android:textSize="10sp"
+                            android:textColor="@color/accent" android:letterSpacing="0.2"/>
+                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                            android:text="@string/dev_name" android:textSize="18sp" android:textStyle="bold"
+                            android:textColor="#FFFFFF" android:layout_marginTop="2dp"/>
+                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                            android:text="@string/dev_role" android:textSize="12sp"
+                            android:textColor="#C9D6E2"/>
+                    </LinearLayout>
+                </LinearLayout>
+
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:text="@string/dev_tag" android:textSize="12sp" android:textStyle="italic"
+                    android:textColor="#9FB3C4" android:layout_marginTop="10dp"/>
+
+                <View android:layout_width="match_parent" android:layout_height="1dp"
+                    android:background="#33FFFFFF" android:layout_marginTop="12dp"
+                    android:layout_marginBottom="4dp"/>
+
+                <LinearLayout android:id="@+id/dev_ig" android:layout_width="match_parent"
+                    android:layout_height="wrap_content" android:orientation="horizontal"
+                    android:gravity="center_vertical" android:paddingTop="10dp" android:paddingBottom="10dp"
+                    android:background="@drawable/bg_row_ripple">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="📸" android:textSize="20sp" android:paddingRight="12dp"/>
+                    <LinearLayout android:layout_width="0dp" android:layout_weight="1"
+                        android:layout_height="wrap_content" android:orientation="vertical">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="@string/dev_ig" android:textSize="14sp"
+                            android:textColor="#FFFFFF" android:textStyle="bold"/>
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="@string/dev_ig_sub" android:textSize="11sp"
+                            android:textColor="#9FB3C4"/>
+                    </LinearLayout>
+                    <ImageView android:layout_width="22dp" android:layout_height="22dp"
+                        android:src="@drawable/ic_chevron_right" android:tint="@color/accent"/>
+                </LinearLayout>
+
+                <LinearLayout android:id="@+id/dev_yt" android:layout_width="match_parent"
+                    android:layout_height="wrap_content" android:orientation="horizontal"
+                    android:gravity="center_vertical" android:paddingTop="10dp" android:paddingBottom="10dp"
+                    android:background="@drawable/bg_row_ripple">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="▶️" android:textSize="18sp" android:paddingRight="12dp"/>
+                    <LinearLayout android:layout_width="0dp" android:layout_weight="1"
+                        android:layout_height="wrap_content" android:orientation="vertical">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="@string/dev_yt" android:textSize="14sp"
+                            android:textColor="#FFFFFF" android:textStyle="bold"/>
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="@string/dev_yt_sub" android:textSize="11sp"
+                            android:textColor="#9FB3C4"/>
+                    </LinearLayout>
+                    <ImageView android:layout_width="22dp" android:layout_height="22dp"
+                        android:src="@drawable/ic_chevron_right" android:tint="@color/accent"/>
+                </LinearLayout>
+            </LinearLayout>
+
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:orientation="horizontal" android:background="@drawable/bg_card"
                 android:padding="14dp" android:gravity="center_vertical">
                 <LinearLayout android:layout_width="0dp" android:layout_weight="1"
@@ -127,65 +201,7 @@
                     android:background="@drawable/bg_button_outline" android:layout_marginTop="8dp"/>
             </LinearLayout>
 
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:orientation="vertical" android:background="@drawable/bg_dev_card"
-                android:padding="16dp" android:layout_marginTop="10dp">
-
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:text="@string/dev_title" android:textSize="11sp"
-                    android:textColor="@color/accent" android:letterSpacing="0.2"/>
-
-                <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-                    android:text="@string/dev_name" android:textSize="18sp" android:textStyle="bold"
-                    android:textColor="#FFFFFF" android:layout_marginTop="4dp"/>
-
-                <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-                    android:text="@string/dev_role" android:textSize="13sp"
-                    android:textColor="#C9D6E2" android:layout_marginTop="2dp"/>
-
-                <View android:layout_width="match_parent" android:layout_height="1dp"
-                    android:background="#33FFFFFF" android:layout_marginTop="12dp"
-                    android:layout_marginBottom="4dp"/>
-
-                <LinearLayout android:id="@+id/dev_ig" android:layout_width="match_parent"
-                    android:layout_height="wrap_content" android:orientation="horizontal"
-                    android:gravity="center_vertical" android:paddingTop="10dp" android:paddingBottom="10dp"
-                    android:background="@drawable/bg_row_ripple">
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:text="📸" android:textSize="20sp" android:paddingRight="12dp"/>
-                    <LinearLayout android:layout_width="0dp" android:layout_weight="1"
-                        android:layout_height="wrap_content" android:orientation="vertical">
-                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                            android:text="@string/dev_ig" android:textSize="14sp"
-                            android:textColor="#FFFFFF" android:textStyle="bold"/>
-                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                            android:text="@string/dev_ig_sub" android:textSize="11sp"
-                            android:textColor="#9FB3C4"/>
-                    </LinearLayout>
-                    <ImageView android:layout_width="22dp" android:layout_height="22dp"
-                        android:src="@drawable/ic_chevron_right" android:tint="@color/accent"/>
-                </LinearLayout>
-
-                <LinearLayout android:id="@+id/dev_yt" android:layout_width="match_parent"
-                    android:layout_height="wrap_content" android:orientation="horizontal"
-                    android:gravity="center_vertical" android:paddingTop="10dp" android:paddingBottom="10dp"
-                    android:background="@drawable/bg_row_ripple">
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:text="▶️" android:textSize="18sp" android:paddingRight="12dp"/>
-                    <LinearLayout android:layout_width="0dp" android:layout_weight="1"
-                        android:layout_height="wrap_content" android:orientation="vertical">
-                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                            android:text="@string/dev_yt" android:textSize="14sp"
-                            android:textColor="#FFFFFF" android:textStyle="bold"/>
-                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                            android:text="@string/dev_yt_sub" android:textSize="11sp"
-                            android:textColor="#9FB3C4"/>
-                    </LinearLayout>
-                    <ImageView android:layout_width="22dp" android:layout_height="22dp"
-                        android:src="@drawable/ic_chevron_right" android:tint="@color/accent"/>
-                </LinearLayout>
-            </LinearLayout>
-
+            
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:orientation="vertical" android:background="@drawable/bg_card"
                 android:padding="14dp" android:layout_marginTop="10dp">

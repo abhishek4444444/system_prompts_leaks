@@ -57,6 +57,12 @@ public class SiteMonitor {
             db.upsertSite(site("https://sarkariresult.com/latestjob/", "page", "Sarkari Result — Latest Jobs"));
             db.upsertSite(site("https://www.freejobalert.com/sarkarijob/", "page", "FreeJobAlert — Latest"));
         }
+        // national scheme / scholarship / govt news sources — added for everyone
+        // (upsert dedupes by URL, so this is safe to run on every launch)
+        db.upsertSite(site("https://www.myscheme.gov.in/", "page", "MyScheme — Govt Schemes"));
+        db.upsertSite(site("https://www.india.gov.in/whats-new", "page", "India.gov.in — What's New"));
+        db.upsertSite(site("https://www.pmindia.gov.in/en/news-updates/", "page", "PM India — News & Schemes"));
+        db.upsertSite(site("https://scholarships.gov.in/", "page", "National Scholarship Portal"));
     }
 
     private static WatchedSite site(String url, String mode, String label) {

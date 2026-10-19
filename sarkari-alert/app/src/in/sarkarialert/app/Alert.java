@@ -32,6 +32,10 @@ public class Alert {
         if (s.equals("psu")) return "psu";
         if (s.equals("news") || s.equals("update")) return "news";
         if (s.equals("job") || s.equals("jobs") || s.equals("naukri")) return "job";
+        if (s.equals("scheme") || s.equals("schemes") || s.equals("yojana")) return "scheme";
+        if (s.equals("scholarship") || s.equals("scholarships")) return "scholarship";
+        if (s.equals("result") || s.equals("results")) return "result";
+        if (s.equals("admit") || s.equals("admit card")) return "admit";
         return "other";
     }
 

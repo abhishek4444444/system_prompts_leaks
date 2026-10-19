@@ -106,7 +106,8 @@ public class AiChatActivity extends Activity {
         });
         findViewById(R.id.ai_save).setOnClickListener(new View.OnClickListener() {
             @Override public void onClick(View v) {
-                String k = keyIn.getText().toString().trim();
+                // strip stray spaces/newlines/quotes people pick up while copying
+                String k = keyIn.getText().toString().replaceAll("\\s", "").replace("\"", "");
                 if (k.length() < 20) {
                     Toast.makeText(AiChatActivity.this,
                             R.string.ai_key_bad, Toast.LENGTH_SHORT).show();

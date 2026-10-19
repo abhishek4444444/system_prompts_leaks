@@ -9,15 +9,17 @@ import org.json.JSONObject;
 import java.util.List;
 
 /**
- * Google AI Studio (Gemini) chat client. If a model is retired the client
- * transparently falls back to the next one, so the extension keeps working.
+ * Google AI Studio (Gemini) chat client. Uses the x-goog-api-key header
+ * (required by the new "AQ." authentication keys) and a fallback chain of
+ * model aliases so the extension keeps working when models retire.
  */
 final class Gemini {
 
     interface Cb { void done(String text, String err); }
 
     private static final String[] MODELS = {
-            "gemini-2.0-flash", "gemini-2.5-flash", "gemini-1.5-flash"
+            "gemini-flash-latest", "gemini-2.5-flash",
+            "gemini-flash-lite-latest", "gemini-2.0-flash"
     };
     private static int modelIdx = 0;
 
@@ -31,6 +33,7 @@ final class Gemini {
         new Thread(new Runnable() {
             @Override public void run() {
                 String lastErr = null;
+                boolean keyProblem = false;
                 for (int attempt = 0; attempt < MODELS.length; attempt++) {
                     int m = (modelIdx + attempt) % MODELS.length;
                     try {
@@ -51,8 +54,8 @@ final class Gemini {
                                 .put("temperature", 0.8));
                         JSONObject root = new JSONObject(WebApi.post(
                                 "https://generativelanguage.googleapis.com/v1beta/models/"
-                                        + MODELS[m] + ":generateContent?key=" + key,
-                                body.toString()));
+                                        + MODELS[m] + ":generateContent",
+                                body.toString(), key));
                         JSONArray cands = root.getJSONArray("candidates");
                         StringBuilder sb = new StringBuilder();
                         JSONArray parts = cands.getJSONObject(0).getJSONObject("content").getJSONArray("parts");
@@ -66,16 +69,27 @@ final class Gemini {
                         uiDeliver(ui, text, null, cb);
                         return;
                     } catch (WebApi.HttpError he) {
-                        lastErr = friendly(he);
-                        if (he.code == 404 || he.code == 400) continue; // model gone — try next
-                        break;
+                        String raw = he.rawMessage();
+                        lastErr = friendly(he, raw);
+                        if (he.code == 404) continue;          // model gone — try the next one
+                        if (he.code == 400) {
+                            if (raw != null && raw.toLowerCase().contains("api key")) {
+                                keyProblem = true;             // bad key — stop immediately
+                                break;
+                            }
+                            continue;                          // maybe model rejects params — try next
+                        }
+                        break; // 403 / 429 / 5xx — retrying another model will not help
                     } catch (Exception e) {
                         lastErr = e.getMessage();
                         break;
                     }
                 }
                 final String err = lastErr == null ? "Something went wrong" : lastErr;
-                uiDeliver(ui, null, err, cb);
+                final boolean kp = keyProblem;
+                ui.post(new Runnable() {
+                    @Override public void run() { cb.done(null, kp ? err + "\n\nOpen Settings → AI key and re-paste it." : err); }
+                });
             }
         }).start();
     }
@@ -86,25 +100,18 @@ final class Gemini {
         });
     }
 
-    private static String friendly(WebApi.HttpError he) {
-        String msg = he.getMessage();
-        try {
-            JSONObject e = new JSONObject(he.body).getJSONObject("error");
-            msg = e.optString("message", msg);
-        } catch (Exception ignored) { }
+    private static String friendly(WebApi.HttpError he, String raw) {
+        String msg = raw == null ? he.getMessage() : raw;
         if (msg == null) msg = "";
-        if (msg.length() > 220) msg = msg.substring(0, 220) + "…";
-        if (he.code == 400 && msg.toLowerCase().contains("api key")) {
-            return "API key looks invalid. Open Settings → AI key and paste a fresh key from aistudio.google.com.";
-        }
+        if (msg.length() > 240) msg = msg.substring(0, 240) + "…";
         if (he.code == 403) {
-            return "Key rejected (403). Make sure the Gemini API is enabled for this key in Google AI Studio.";
+            return "Key rejected (403). Generate a fresh key in Google AI Studio and paste it in Settings.\n\n" + msg;
         }
         if (he.code == 429) {
-            return "Free quota limit reached for now. Wait a minute and try again.";
+            return "Free quota limit reached for now. Wait a minute and try again.\n\n" + msg;
         }
         if (he.code == 404 || he.code == 400) {
-            return "Model unavailable — try again.";
+            return "Model unavailable (" + he.code + "). " + msg;
         }
         return "AI error (" + he.code + "): " + msg;
     }

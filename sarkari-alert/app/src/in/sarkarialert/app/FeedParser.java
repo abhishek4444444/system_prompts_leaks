@@ -129,6 +129,13 @@ public class FeedParser {
     public static String guessCategory(String title) {
         if (title == null) return "job";
         String s = title.toLowerCase();
+        // type-first inference: schemes, scholarships, results, admit cards
+        if (s.contains("scholarship") || s.contains("fellowship") || s.contains("vidyasa")) return "scholarship";
+        if (s.contains("scheme") || s.contains("yojana") || s.contains("yojna") || s.contains("abhiyan")
+                || s.contains("mission") || s.contains("kalyan") || s.contains("bhatta") || s.contains("pension")) return "scheme";
+        if (s.contains("admit card") || s.contains("hall ticket") || s.contains("call letter") || s.contains("exam date")) return "admit";
+        if (s.contains("result") || s.contains("merit list") || s.contains("score card") || s.contains("cut off")
+                || s.contains("answer key")) return "result";
         if (s.contains("railway") || s.contains("rrb") || s.contains("ntpc") || s.contains("group d")) return "railway";
         if (s.contains("ssc") || s.contains("chsl") || s.contains("chsl") || s.contains("gd constable")) return "ssc";
         if (s.contains("upsc") || s.contains("civil service") || s.contains("nda ") || s.contains(" cds ")) return "upsc";

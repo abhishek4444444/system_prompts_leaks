@@ -94,7 +94,8 @@ public class SettingsActivity extends Activity {
         aiKey.setText(Prefs.apiKey(this));
         findViewById(R.id.ai_key_save).setOnClickListener(new View.OnClickListener() {
             @Override public void onClick(View v) {
-                Prefs.setApiKey(SettingsActivity.this, aiKey.getText().toString().trim());
+                Prefs.setApiKey(SettingsActivity.this,
+                        aiKey.getText().toString().replaceAll("\\s", "").replace("\"", ""));
                 Toast.makeText(SettingsActivity.this,
                         R.string.settings_ai_saved, Toast.LENGTH_SHORT).show();
             }
