@@ -35,13 +35,40 @@ final class Translate {
                         JSONArray root = new JSONArray(WebApi.get(url));
                         JSONArray segs = root.getJSONArray(0);
                         StringBuilder part = new StringBuilder();
-                        for (int i = 0; i < segs.length(); i++) {
-                            JSONArray seg = segs.getJSONArray(i);
-                            if (mode.equals("rm") && seg.length() > 4 && !seg.isNull(4)) {
-                                String rm = seg.getString(4);
-                                if (rm.length() > 0) part.append(rm);
-                            } else if (!seg.isNull(0)) {
-                                part.append(seg.getString(0));
+                        if (mode.equals("rm")) {
+                            // response layout (verified live):
+                            //   [trans, orig, null, null, wordCount]  <- dt=t sentence
+                            //   [null, null, "roman dost"]            <- dt=rm translit entry
+                            // collect only the translit entries; fall back to the
+                            // translated text if Google returned none
+                            StringBuilder roman = new StringBuilder();
+                            StringBuilder plain = new StringBuilder();
+                            for (int i = 0; i < segs.length(); i++) {
+                                JSONArray seg = segs.getJSONArray(i);
+                                if (seg.isNull(0)) {
+                                    for (int k = 2; k < seg.length(); k++) {
+                                        if (!seg.isNull(k)) {
+                                            Object v = seg.get(k);
+                                            if (v instanceof String) {
+                                                roman.append((String) v).append(' ');
+                                                break;
+                                            }
+                                        }
+                                    }
+                                } else if (!seg.isNull(0)) {
+                                    Object v = seg.get(0);
+                                    if (v instanceof String) plain.append((String) v);
+                                }
+                            }
+                            if (roman.length() > 0) {
+                                part.append(roman.toString().replaceAll("\\s+", " ").trim());
+                            } else {
+                                part.append(plain);
+                            }
+                        } else {
+                            for (int i = 0; i < segs.length(); i++) {
+                                JSONArray seg = segs.getJSONArray(i);
+                                if (!seg.isNull(0)) part.append(seg.getString(0));
                             }
                         }
                         if (root.length() > 2 && !root.isNull(2)) detected = root.getString(2);

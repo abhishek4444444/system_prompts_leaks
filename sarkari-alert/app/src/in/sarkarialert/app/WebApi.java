@@ -18,6 +18,10 @@ final class WebApi {
         return call("GET", surl, null, null);
     }
 
+    static String get(String surl, String apiKey) throws Exception {
+        return call("GET", surl, null, apiKey);
+    }
+
     static String post(String surl, String json) throws Exception {
         return call("POST", surl, json, null);
     }
