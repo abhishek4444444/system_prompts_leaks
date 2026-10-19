@@ -18,7 +18,35 @@ def u32(v): return struct.pack("<I", v)
 def u64(v): return struct.pack("<Q", v)
 def lp(b): return u32(len(b)) + b
 
-def align_repack(base_bytes, dex_bytes, alignment=4):
+def build_v1_files(entry_items, key, cert):
+    """META-INF MANIFEST.MF + CERT.SF + CERT.RSA (JAR signing, RSA SHA-256).
+    entry_items: list of (name_bytes, data_bytes) excluding META-INF/* ."""
+    import base64, hashlib as _h
+    from cryptography.hazmat.primitives import hashes, serialization
+    mf_sections = [b"Manifest-Version: 1.0\r\nCreated-By: 1.0 (Sarkari Alert Builder)\r\n\r\n"]
+    mf_names = []
+    for name, data in entry_items:
+        digest = base64.b64encode(_h.sha256(data).digest()).decode()
+        sec = ("Name: %s\r\nSHA-256-Digest: %s\r\n\r\n" % (name.decode(), digest)).encode()
+        mf_sections.append(sec)
+        mf_names.append(name.decode())
+    manifest = b"".join(mf_sections)
+
+    sf = b"Signature-Version: 1.0\r\nCreated-By: 1.0 (Sarkari Alert Builder)\r\n"
+    sf += ("SHA-256-Digest-Manifest: %s\r\n" % base64.b64encode(_h.sha256(manifest).digest()).decode()).encode()
+    sf += b"\r\n"
+    for sec in mf_sections[1:]:
+        sf += sec + ("SHA-256-Digest: %s\r\n\r\n" % base64.b64encode(_h.sha256(sec).digest()).decode()).encode()
+    from cryptography.hazmat.primitives.serialization import pkcs7
+    p7 = (pkcs7.PKCS7SignatureBuilder()
+          .set_data(sf)
+          .add_signer(cert, key, hashes.SHA256())
+          .sign(serialization.Encoding.DER, [pkcs7.PKCS7Options.DetachedSignature]))
+    return [("META-INF/MANIFEST.MF", manifest),
+            ("META-INF/CERT.SF", sf),
+            ("META-INF/CERT.RSA", p7)]
+
+def align_repack(base_bytes, dex_bytes, alignment=4, extra_files=None):
     """Rewrite the zip with every STORED entry 4-byte aligned (zipalign).
     Alignment padding lives in each local header extra field (id 0xd935),
     mirrored in the central directory. Deflated entries are re-deflated."""
@@ -26,10 +54,18 @@ def align_repack(base_bytes, dex_bytes, alignment=4):
     items = [(info, zin.read(info.filename)) for info in zin.infolist()]
     if dex_bytes is not None:
         items.append((None, dex_bytes))
+    if extra_files:
+        for n, d in extra_files:
+            items.append(("__extra__:" + n, d))
     out = io.BytesIO()
     cd_parts = []
     for info, data in items:
-        if info is not None:
+        if isinstance(info, str):
+            name = info.split(":", 1)[1].encode("utf-8")
+            method = zipfile.ZIP_DEFLATED
+            dt = (2026, 10, 19, 0, 0, 0)
+            ext_attr = 0o644 << 16
+        elif info is not None:
             name = info.filename.encode("utf-8")
             method = info.compress_type
             dt = info.date_time
@@ -70,6 +106,19 @@ def align_repack(base_bytes, dex_bytes, alignment=4):
     out.write(struct.pack("<IHHHHIIH", 0x06054B50, 0, 0, n, n, cd_size, cd_off, 0))
     return out.getvalue()
 
+def entries_of(data):
+    z = zipfile.ZipFile(io.BytesIO(data))
+    out = []
+    for info in z.infolist():
+        if info.filename.startswith("META-INF/"):
+            continue
+        out.append((info.filename.encode("utf-8"), z.read(info.filename)))
+    return out
+
+def x509_mod():
+    from cryptography import x509
+    return x509
+
 def check_alignment(data, alignment=4):
     z = zipfile.ZipFile(io.BytesIO(data))
     bad = []
@@ -106,8 +155,8 @@ def content_digest(regions):
     h.update(b"\x5a" + u64(total))
     return h.digest()
 
-def repack(base_bytes, dex_bytes):
-    return align_repack(base_bytes, dex_bytes)
+def repack(base_bytes, dex_bytes, **kw):
+    return align_repack(base_bytes, dex_bytes, **kw)
 
 def repack_unaligned(base_bytes, dex_bytes):
     zin = zipfile.ZipFile(io.BytesIO(base_bytes))
@@ -255,12 +304,17 @@ def main():
     elif cmd == "pack":
         base = open(sys.argv[2], "rb").read()
         dex = open(sys.argv[3], "rb").read() if sys.argv[3] != "-" else None
+        from cryptography.hazmat.primitives import serialization as _ser
+        key = _ser.load_pem_private_key(open(sys.argv[4], "rb").read(), password=None)
+        cert = x509_mod().load_der_x509_certificate(open(sys.argv[5], "rb").read())
         packed = repack(base, dex)
+        v1 = build_v1_files(entries_of(packed), key, cert)
+        packed = repack(base, dex, extra_files=v1)
         bad = check_alignment(packed)
         assert not bad, "misaligned stored entries: %s" % bad
         signed = sign(packed, sys.argv[4], sys.argv[5])
         open(sys.argv[6], "wb").write(signed)
-        print("packed+aligned+signed ->", sys.argv[6], "(%d bytes)" % len(signed))
+        print("packed+aligned+v1+v2 signed ->", sys.argv[6], "(%d bytes)" % len(signed))
     elif cmd == "verify":
         verify(sys.argv[2])
     else:
