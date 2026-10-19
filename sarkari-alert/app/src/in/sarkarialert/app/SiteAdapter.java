@@ -18,6 +18,12 @@ public class SiteAdapter extends BaseAdapter {
         this.items = items;
     }
 
+    public void setSites(List<WatchedSite> fresh) {
+        items.clear();
+        items.addAll(fresh);
+        notifyDataSetChanged();
+    }
+
     @Override
     public int getCount() { return items.size(); }
     @Override

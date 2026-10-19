@@ -205,6 +205,8 @@ public class MainActivity extends Activity {
             loadWatch();
         } else {
             if (list.getHeaderViewsCount() > 0) list.removeHeaderView(watchHeader);
+            // rebind the alerts adapter: ListView kept the site adapter after Watch
+            list.setAdapter(adapter);
             reloadAlerts();
         }
     }
@@ -265,7 +267,11 @@ public class MainActivity extends Activity {
 
     private void loadWatch() {
         sites = new Db(this).listSites();
-        siteAdapter = new SiteAdapter(this, sites);
+        if (siteAdapter == null) {
+            siteAdapter = new SiteAdapter(this, sites);
+        } else {
+            siteAdapter.setSites(sites);
+        }
         list.setAdapter(siteAdapter);
         empty.setText(R.string.watch_empty);
         empty.setVisibility(sites.isEmpty() ? View.VISIBLE : View.GONE);
