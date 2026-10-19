@@ -109,6 +109,14 @@ public class Prefs {
         sp(c).edit().putBoolean("national_seeded", true).apply();
     }
 
+    public static boolean recatV2(Context c) {
+        return sp(c).getBoolean("recat_v2", false);
+    }
+
+    public static void setRecatV2(Context c) {
+        sp(c).edit().putBoolean("recat_v2", true).apply();
+    }
+
     public static boolean sitesMigrated(Context c) {
         return sp(c).getBoolean("sites_migrated", false);
     }

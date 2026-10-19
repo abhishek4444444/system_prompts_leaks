@@ -47,6 +47,9 @@ public class BrowserActivity extends Activity {
     private View rescueBar;
     private boolean desktop;
     private boolean inMirror;        // currently viewing the SiteGuard mirror
+    private boolean reading;         // reader mode active
+    private int adsBlocked;          // requests zapped by the ad blocker
+    private String defaultUa;        // the WebView's real mobile UA
     private String rescueTriedFor;   // URL already auto-rescued once (loop guard)
 
     @Override
@@ -60,6 +63,7 @@ public class BrowserActivity extends Activity {
         rescueBar = findViewById(R.id.b_rescue);
         desktop = Prefs.desktopMode(this);
 
+        defaultUa = WebSettings.getDefaultUserAgent(this); // real mobile UA
         WebSettings s = web.getSettings();
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
@@ -104,6 +108,33 @@ public class BrowserActivity extends Activity {
                 bar.setVisibility(View.GONE);
                 title.setText(v.getTitle());
                 CookieManager.getInstance().flush();
+            }
+
+            /** ad blocker: known ad/tracker hosts never leave the phone */
+            @Override
+            public android.webkit.WebResourceResponse shouldInterceptRequest(
+                    WebView v, WebResourceRequest req) {
+                String h = req.getUrl().getHost();
+                if (h != null) {
+                    h = h.toLowerCase();
+                    String[] blocked = {"doubleclick.net", "googlesyndication",
+                        "googleadservices", "adservice", "adnxs", "taboola", "outbrain",
+                        "criteo", "pubmatic", "rubiconproject", "openx.net", "adcolony",
+                        "mopub", "unityads", "applovin", "chartboost", "adsrvr",
+                        "amazon-adsystem", "moatads", "scorecardresearch", "quantserve",
+                        "smartadserver", "popads", "popcash", "propellerads", "exoclick",
+                        "zedo", "casalemedia", "yieldmo", "sharethrough", "teads",
+                        "media.net", "bidswitch", "adnalytics"};
+                    for (String b : blocked) {
+                        if (h.contains(b)) {
+                            adsBlocked++;
+                            return new android.webkit.WebResourceResponse(
+                                    "text/plain", "utf-8",
+                                    new java.io.ByteArrayInputStream(new byte[0]));
+                        }
+                    }
+                }
+                return super.shouldInterceptRequest(v, req);
             }
 
             /** network-level failure: DNS, timeout, connection refused… */
@@ -209,21 +240,29 @@ public class BrowserActivity extends Activity {
     private void showMenu(View anchor) {
         PopupMenu menu = new PopupMenu(this, anchor);
         menu.getMenu().add(getString(
-                desktop ? R.string.browser_menu_desktop_on : R.string.browser_menu_desktop_off)
-                .toString());
+                desktop ? R.string.browser_menu_desktop_on : R.string.browser_menu_desktop_off));
+        menu.getMenu().add(getString(R.string.browser_menu_reader));
+        menu.getMenu().add(getString(R.string.browser_menu_copy));
         menu.getMenu().add(getString(R.string.browser_menu_share));
         menu.getMenu().add(getString(R.string.browser_menu_external));
+        android.view.MenuItem info =
+                menu.getMenu().add(getString(R.string.browser_menu_ads, adsBlocked));
+        info.setEnabled(false); // live ad-block counter, just informative
         menu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
             @Override public boolean onMenuItemClick(android.view.MenuItem item) {
                 String t = String.valueOf(item.getTitle());
                 if (t.startsWith(getString(R.string.browser_menu_desktop_prefix))) {
                     desktop = !desktop;
                     Prefs.setDesktopMode(BrowserActivity.this, desktop);
+                    applyUa();
+                    reloadOriginal();
                     Toast.makeText(BrowserActivity.this, desktop
                             ? R.string.browser_menu_desktop_on : R.string.browser_menu_desktop_off,
                             Toast.LENGTH_SHORT).show();
-                    applyUa();
-                    reloadOriginal();
+                } else if (t.equals(getString(R.string.browser_menu_reader))) {
+                    toggleReader();
+                } else if (t.equals(getString(R.string.browser_menu_copy))) {
+                    copyLink();
                 } else if (t.equals(getString(R.string.browser_menu_share))) {
                     sharePage();
                 } else {
@@ -236,10 +275,33 @@ public class BrowserActivity extends Activity {
     }
 
     private void applyUa() {
-        web.getSettings().setUserAgentString(desktop ? DESKTOP_UA : "");
+        web.getSettings().setUserAgentString(desktop ? DESKTOP_UA : defaultUa);
+    }
+
+    /** reader mode: strips nav/ads/images, leaves clean article text */
+    private void toggleReader() {
+        if (reading) {
+            reading = false;
+            reloadOriginal();
+            return;
+        }
+        reading = true;
+        web.evaluateJavascript(READER_JS, null);
+        Toast.makeText(this, R.string.browser_reader_on, Toast.LENGTH_SHORT).show();
+    }
+
+    private void copyLink() {
+        try {
+            android.content.ClipboardManager cm =
+                (android.content.ClipboardManager) getSystemService(android.content.Context.CLIPBOARD_SERVICE);
+            cm.setPrimaryClip(android.content.ClipData.newPlainText("url",
+                    displayUrl(web.getUrl())));
+            Toast.makeText(this, R.string.browser_copied, Toast.LENGTH_SHORT).show();
+        } catch (Exception ignored) { }
     }
 
     private void reloadOriginal() {
+        reading = false;
         String u = web.getUrl();
         if (u == null) return;
         if (u.contains("r.jina.ai") || u.contains("web.archive.org")) {
@@ -388,6 +450,16 @@ public class BrowserActivity extends Activity {
             return js == null ? "" : js;
         }
     }
+
+    private static final String READER_JS =
+        "(function(){" +
+        "var t=document.querySelector('article')||document.querySelector('main')||document.body;" +
+        "var c=t.cloneNode(true);" +
+        "c.querySelectorAll('script,style,nav,header,footer,aside,iframe,img,form,button,svg,ins,video,audio').forEach(function(e){e.remove();});" +
+        "document.documentElement.innerHTML='<head><meta name=viewport content=\'width=device-width,initial-scale=1\'><style>" +
+        "body{font-family:Georgia,serif;background:#FBF7EF;color:#22201C;padding:18px;font-size:17px;line-height:1.65;max-width:680px;margin:auto}" +
+        "h1,h2,h3{line-height:1.25}a{color:#B45309}table{max-width:100%;font-size:14px}</style></head><body>'+c.innerHTML+'</body>';" +
+        "})()";
 
     private void errorPage() {
         String html = "<html><body style='background:#F2F4F8;font-family:sans-serif;"

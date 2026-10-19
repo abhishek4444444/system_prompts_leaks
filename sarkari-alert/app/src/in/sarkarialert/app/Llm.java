@@ -15,8 +15,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Universal AI client. ONE key field, ANY provider — the key format is
- * auto-detected:
+ * Universal AI client v2.
+ *
+ * ONE field, MANY keys, ANY provider — keys are auto-detected by format
+ * and can be comma-separated; when one key hits its rate limit the app
+ * silently switches to the next:
  *
  *   AIza… / AQ.…  → Google Gemini   (x-goog-api-key header)
  *   gsk_…         → Groq            (OpenAI-compatible, Llama)
@@ -24,17 +27,14 @@ import java.util.List;
  *   sk-or-…       → OpenRouter      (OpenAI-compatible, free models)
  *   sk-…          → OpenAI          (OpenAI-compatible)
  *
- * Answers STREAM token-by-token (SSE) so replies feel instant, with a
- * silent non-streaming fallback. Roles are normalized per API
- * ("model" for Gemini, "assistant" for OpenAI-style) — the old
- * "Role 'ai' is not supported" 400 is fixed at this layer.
+ * Answers STREAM token-by-token (SSE). 429/503 get one silent retry,
+ * then the next key/model takes over. Roles are normalized per API
+ * ("model" for Gemini, "assistant" for OpenAI-style).
  */
 final class Llm {
 
     interface StreamCb {
-        /** progressive full text so far, already on the UI thread */
         void onDelta(String soFar);
-        /** final result or error, on the UI thread */
         void done(String text, String err);
     }
 
@@ -72,16 +72,43 @@ final class Llm {
         return "Google Gemini";
     }
 
+    /** parse the stored field into [provider, key] pairs (comma/space/newline separated) */
+    static List<String[]> pool(String stored) {
+        List<String[]> out = new ArrayList<String[]>();
+        if (stored == null) return out;
+        for (String raw : stored.split("[,\\n;]+")) {
+            String k = raw.trim();
+            if (k.length() < 20) continue;
+            String p = detect(k);
+            if (p.length() > 0) out.add(new String[]{p, k});
+        }
+        return out;
+    }
+
     // ---- entry point ----
 
-    static void ask(final String key, final String system,
+    static void ask(final String stored, final String system,
                     final List<String[]> history, final StreamCb cb) {
         new Thread(new Runnable() {
             @Override public void run() {
-                String provider = detect(key);
-                if (provider.length() == 0) provider = "gemini"; // last guess
-                if ("gemini".equals(provider)) askGemini(key, system, history, cb);
-                else askOpenAIStyle(provider, key, system, history, cb);
+                List<String[]> pool = pool(stored);
+                if (pool.isEmpty()) {
+                    deliverErr(cb, "No AI key configured. Settings → AI key.");
+                    return;
+                }
+                String err = null;
+                for (int i = 0; i < pool.size(); i++) {
+                    String[] pk = pool.get(i);
+                    if (i > 0) {
+                        note(cb, "⏳ " + pretty(pool.get(i - 1)[0])
+                                + " limit hit — switching to next key…");
+                    }
+                    boolean gemini = "gemini".equals(pk[0]);
+                    err = gemini ? runGemini(pk[1], system, history, cb)
+                            : runOpen(pk[0], pk[1], system, history, cb);
+                    if (err == null) return; // delivered
+                }
+                deliverErr(cb, err == null ? "Something went wrong" : err);
             }
         }).start();
     }
@@ -147,102 +174,116 @@ final class Llm {
         return 0;
     }
 
-    private static void askGemini(final String key, final String system,
-                                  final List<String[]> history, final StreamCb cb) {
+    /** @return null on delivered success, else the error to report/switch on */
+    private static String runGemini(String key, String system,
+                                    List<String[]> history, StreamCb cb) {
         List<String> models = new ArrayList<String>();
         String discovered = pickGemini(key);
         if (discovered != null) models.add(discovered);
         for (String f : GEMINI_FALLBACKS) if (!models.contains(f)) models.add(f);
 
+        String lastErr = null;
         for (int attempt = 0; attempt < models.size(); attempt++) {
-            final String model = models.get(attempt);
-            try {
-                JSONObject body = new JSONObject();
-                if (system != null && system.length() > 0) {
-                    body.put("systemInstruction", new JSONObject().put("parts",
-                            new JSONArray().put(new JSONObject().put("text", system))));
-                }
-                JSONArray contents = new JSONArray();
-                for (String[] msg : history) {
-                    contents.put(new JSONObject()
-                            .put("role", "ai".equals(msg[0]) ? "model" : "user") // Gemini roles
-                            .put("parts", new JSONArray().put(new JSONObject().put("text", msg[1]))));
-                }
-                body.put("contents", contents);
-                body.put("generationConfig", new JSONObject()
-                        .put("maxOutputTokens", 8192).put("temperature", 0.8));
-                HttpURLConnection conn = openPost(
-                        "https://generativelanguage.googleapis.com/v1beta/models/"
-                                + model + ":streamGenerateContent?alt=sse",
-                        body.toString(), "x-goog-api-key", key);
-                int code = conn.getResponseCode();
-                if (code >= 400) {
-                    WebApi.HttpError he = new WebApi.HttpError(code, drain(conn.getErrorStream()));
-                    conn.disconnect();
-                    String raw = he.rawMessage();
-                    if (code == 404) {
-                        if (model.equals(discovered)) { synchronized (Llm.class) { gModel = null; } }
-                        continue; // retired model — next
+            String model = models.get(attempt);
+            StringBuilder out = new StringBuilder();
+            for (int tries = 0; tries < 2; tries++) { // one silent retry on 429/503
+                HttpURLConnection conn = null;
+                try {
+                    JSONObject body = new JSONObject();
+                    if (system != null && system.length() > 0) {
+                        body.put("systemInstruction", new JSONObject().put("parts",
+                                new JSONArray().put(new JSONObject().put("text", system))));
                     }
-                    if (code == 400 && raw != null && raw.toLowerCase().contains("api key")) {
-                        deliverErr(cb, "API key looks invalid for Google Gemini. "
-                                + "Open Settings → AI key and paste a fresh key.\n\n" + safe(raw));
-                        return;
+                    JSONArray contents = new JSONArray();
+                    for (String[] msg : history) {
+                        contents.put(new JSONObject()
+                                .put("role", "ai".equals(msg[0]) ? "model" : "user")
+                                .put("parts", new JSONArray().put(new JSONObject().put("text", msg[1]))));
                     }
-                    if (code == 400) continue; // maybe this model rejects params — try next
-                    deliverErr(cb, friendly(code, "Google Gemini", raw));
-                    return;
-                }
-                String type = conn.getContentType() == null ? "" : conn.getContentType();
-                StringBuilder sb = new StringBuilder();
-                if (type.contains("application/json")) {
-                    // server ignored the stream — whole JSON in one body
-                    JSONObject root = new JSONObject(drain(conn.getInputStream()));
-                    JSONArray cands = root.getJSONArray("candidates");
-                    JSONArray parts = cands.getJSONObject(0).getJSONObject("content").getJSONArray("parts");
-                    for (int i = 0; i < parts.length(); i++) {
-                        JSONObject p = parts.getJSONObject(i);
-                        if (p.has("text")) sb.append(p.getString("text"));
-                    }
-                    conn.disconnect();
-                    deliverDone(cb, sb.toString(), cb, false);
-                } else {
-                    boolean ok = streamSse(conn, new Part() {
-                        @Override public String text(JSONObject root) {
-                            try {
-                                JSONArray cands = root.getJSONArray("candidates");
-                                JSONArray parts = cands.getJSONObject(0)
-                                        .getJSONObject("content").getJSONArray("parts");
-                                StringBuilder t = new StringBuilder();
-                                for (int i = 0; i < parts.length(); i++) {
-                                    JSONObject p = parts.getJSONObject(i);
-                                    if (p.has("text")) t.append(p.getString("text"));
-                                }
-                                return t.toString();
-                            } catch (Exception e) {
-                                return "";
-                            }
+                    body.put("contents", contents);
+                    body.put("generationConfig", new JSONObject()
+                            .put("maxOutputTokens", 8192).put("temperature", 0.8));
+                    conn = openPost("https://generativelanguage.googleapis.com/v1beta/models/"
+                            + model + ":streamGenerateContent?alt=sse",
+                            body.toString(), "x-goog-api-key", key);
+                    int code = conn.getResponseCode();
+                    if (code == 429 || code == 503) {
+                        conn.disconnect();
+                        lastErr = pretty("gemini") + " is busy right now (" + code + ").";
+                        if (out.length() == 0 && tries == 0) {
+                            try { Thread.sleep(900); } catch (InterruptedException e) { }
+                            continue; // silent retry
                         }
-                    }, sb, cb);
-                    conn.disconnect();
-                    if (ok) {
-                        synchronized (Llm.class) { gModel = model; gModelAt = System.currentTimeMillis(); }
-                        deliverDone(cb, sb.toString(), cb, true);
-                    } else if (sb.length() == 0) {
-                        deliverErr(cb, "Connection lost before any reply. Try again.");
-                    } else {
-                        deliverDone(cb, sb.toString(), cb, false); // partial but usable
+                        break; // next model / next key
                     }
-                }
-                return;
-            } catch (Exception e) {
-                if (attempt == models.size() - 1) {
-                    deliverErr(cb, "Couldn't reach Google Gemini: " + safe(String.valueOf(e.getMessage())));
-                    return;
+                    if (code >= 400) {
+                        WebApi.HttpError he = new WebApi.HttpError(code, drain(conn.getErrorStream()));
+                        conn.disconnect();
+                        String raw = he.rawMessage();
+                        lastErr = friendly(code, "Google Gemini", raw);
+                        if (code == 404) {
+                            if (model.equals(discovered)) { synchronized (Llm.class) { gModel = null; } }
+                            break; // retired — next model
+                        }
+                        if (code == 400 && raw != null && raw.toLowerCase().contains("api key")) {
+                            return lastErr; // dead key — switch now
+                        }
+                        if (code == 400) break; // model rejected params — next model
+                        return lastErr;         // 401/403 — switch key
+                    }
+                    String type = conn.getContentType() == null ? "" : conn.getContentType();
+                    if (type.contains("application/json")) {
+                        JSONObject root = new JSONObject(drain(conn.getInputStream()));
+                        JSONArray cands = root.getJSONArray("candidates");
+                        JSONArray parts = cands.getJSONObject(0).getJSONObject("content").getJSONArray("parts");
+                        for (int i = 0; i < parts.length(); i++) {
+                            JSONObject p = parts.getJSONObject(i);
+                            if (p.has("text")) out.append(p.getString("text"));
+                        }
+                        conn.disconnect();
+                    } else {
+                        boolean clean = streamSse(conn, geminiPart(), out, cb);
+                        conn.disconnect();
+                        if (!clean && out.length() == 0) {
+                            lastErr = "Connection lost before any reply.";
+                            break;
+                        }
+                    }
+                    if (out.length() > 0) {
+                        synchronized (Llm.class) { gModel = model; gModelAt = System.currentTimeMillis(); }
+                        deliverDone(cb, out.toString());
+                        return null;
+                    }
+                    lastErr = "Empty reply from model.";
+                    break;
+                } catch (Exception e) {
+                    if (conn != null) conn.disconnect();
+                    lastErr = "Couldn't reach Google Gemini: " + safe(e.getMessage());
+                    break;
                 }
             }
         }
-        deliverErr(cb, "No working Gemini model found for this key right now.");
+        return lastErr;
+    }
+
+    private static Part geminiPart() {
+        return new Part() {
+            @Override public String text(JSONObject root) {
+                try {
+                    JSONArray cands = root.getJSONArray("candidates");
+                    JSONArray parts = cands.getJSONObject(0)
+                            .getJSONObject("content").getJSONArray("parts");
+                    StringBuilder t = new StringBuilder();
+                    for (int i = 0; i < parts.length(); i++) {
+                        JSONObject p = parts.getJSONObject(i);
+                        if (p.has("text")) t.append(p.getString("text"));
+                    }
+                    return t.toString();
+                } catch (Exception e) {
+                    return "";
+                }
+            }
+        };
     }
 
     // ============ OpenAI-compatible: Groq / DeepSeek / OpenAI / OpenRouter ============
@@ -267,11 +308,13 @@ final class Llm {
         return new String[]{"gpt-4o-mini", "gpt-4.1-mini"};
     }
 
-    private static void askOpenAIStyle(final String provider, final String key, final String system,
-                                       final List<String[]> history, final StreamCb cb) {
+    private static String runOpen(final String provider, String key, String system,
+                                  List<String[]> history, StreamCb cb) {
         String[] models = modelsOf(provider);
+        String lastErr = null;
         for (int attempt = 0; attempt < models.length; attempt++) {
             String model = models[attempt];
+            StringBuilder out = new StringBuilder();
             try {
                 JSONObject body = new JSONObject();
                 body.put("model", model);
@@ -281,7 +324,7 @@ final class Llm {
                 }
                 for (String[] msg : history) {
                     messages.put(new JSONObject()
-                            .put("role", "ai".equals(msg[0]) ? "assistant" : "user") // OpenAI roles
+                            .put("role", "ai".equals(msg[0]) ? "assistant" : "user")
                             .put("content", msg[1]));
                 }
                 body.put("messages", messages);
@@ -294,21 +337,18 @@ final class Llm {
                 if (code >= 400) {
                     WebApi.HttpError he = new WebApi.HttpError(code, drain(conn.getErrorStream()));
                     conn.disconnect();
-                    String raw = he.rawMessage();
+                    lastErr = friendly(code, pretty(provider), he.rawMessage());
                     if ((code == 404 || code == 400) && attempt < models.length - 1) continue;
-                    deliverErr(cb, friendly(code, pretty(provider), raw));
-                    return;
+                    return lastErr; // quota/auth — switch key
                 }
                 String type = conn.getContentType() == null ? "" : conn.getContentType();
-                StringBuilder sb = new StringBuilder();
                 if (type.contains("application/json")) {
                     JSONObject root = new JSONObject(drain(conn.getInputStream()));
-                    sb.append(root.getJSONArray("choices").getJSONObject(0)
+                    out.append(root.getJSONArray("choices").getJSONObject(0)
                             .getJSONObject("message").optString("content", ""));
                     conn.disconnect();
-                    deliverDone(cb, sb.toString(), cb, false);
                 } else {
-                    boolean ok = streamSse(conn, new Part() {
+                    boolean clean = streamSse(conn, new Part() {
                         @Override public String text(JSONObject root) {
                             try {
                                 return root.getJSONArray("choices").getJSONObject(0)
@@ -317,20 +357,22 @@ final class Llm {
                                 return "";
                             }
                         }
-                    }, sb, cb);
+                    }, out, cb);
                     conn.disconnect();
-                    if (ok || sb.length() > 0) deliverDone(cb, sb.toString(), cb, ok);
-                    else deliverErr(cb, "Connection lost before any reply. Try again.");
+                    if (!clean && out.length() == 0) {
+                        return "Connection lost before any reply.";
+                    }
                 }
-                return;
+                if (out.length() > 0) {
+                    deliverDone(cb, out.toString());
+                    return null;
+                }
+                lastErr = "Empty reply from model.";
             } catch (Exception e) {
-                if (attempt == models.length - 1) {
-                    deliverErr(cb, "Couldn't reach " + pretty(provider) + ": "
-                            + safe(String.valueOf(e.getMessage())));
-                    return;
-                }
+                lastErr = "Couldn't reach " + pretty(provider) + ": " + safe(e.getMessage());
             }
         }
+        return lastErr;
     }
 
     // ================= shared plumbing =================
@@ -340,7 +382,7 @@ final class Llm {
     private static HttpURLConnection openPost(String surl, String json,
                                               String authName, String authValue) throws Exception {
         HttpURLConnection conn = (HttpURLConnection) new URL(surl).openConnection();
-        conn.setConnectTimeout(15000);
+        conn.setConnectTimeout(12000);
         conn.setReadTimeout(120000);
         conn.setRequestMethod("POST");
         conn.setInstanceFollowRedirects(true);
@@ -355,7 +397,7 @@ final class Llm {
         return conn;
     }
 
-    /** reads an SSE body, calls back with extracted text deltas; true = clean end */
+    /** reads an SSE body, streams throttled deltas; true = clean end */
     private static boolean streamSse(HttpURLConnection conn, Part part,
                                      StringBuilder out, final StreamCb cb) {
         BufferedReader r = null;
@@ -371,13 +413,13 @@ final class Llm {
                 try {
                     t = part.text(new JSONObject(data));
                 } catch (Exception e) {
-                    continue; // keep-alive or comment chunk
+                    continue;
                 }
                 if (t == null || t.length() == 0) continue;
                 out.append(t);
                 final String soFar = out.toString();
                 long now = System.currentTimeMillis();
-                if (now - lastPost >= 120) { // throttle UI updates
+                if (now - lastPost >= 100) {
                     lastPost = now;
                     UI.post(new Runnable() {
                         @Override public void run() { cb.onDelta(soFar); }
@@ -386,7 +428,7 @@ final class Llm {
             }
             return true;
         } catch (Exception e) {
-            return false; // mid-stream failure — caller decides with what we have
+            return false;
         } finally {
             try { if (r != null) r.close(); } catch (Exception ignored) { }
         }
@@ -405,8 +447,13 @@ final class Llm {
         }
     }
 
-    private static void deliverDone(final StreamCb cb, final String text, final StreamCb unused,
-                                    final boolean cleanEnd) {
+    private static void note(final StreamCb cb, final String msg) {
+        UI.post(new Runnable() {
+            @Override public void run() { cb.onDelta(msg); }
+        });
+    }
+
+    private static void deliverDone(final StreamCb cb, final String text) {
         UI.post(new Runnable() {
             @Override public void run() {
                 String t = text == null ? "" : text.trim();
@@ -425,11 +472,10 @@ final class Llm {
     private static String friendly(int code, String provider, String raw) {
         String msg = raw == null ? "" : raw;
         if (msg.length() > 240) msg = msg.substring(0, 240) + "…";
-        if (code == 401) return "API key rejected by " + provider + " (401). "
-                + "Check the key in Settings → AI key.\n\n" + msg;
-        if (code == 402) return "DeepSeek balance is empty (402). Top up or use another provider.\n\n" + msg;
+        if (code == 401) return provider + " rejected this key (401). Check Settings → AI key.\n\n" + msg;
+        if (code == 402) return "DeepSeek balance is empty (402). Top up or add another provider's key.\n\n" + msg;
         if (code == 403) return "Key rejected by " + provider + " (403).\n\n" + msg;
-        if (code == 429) return "Rate limit reached (429). Wait a moment and try again.\n\n" + msg;
+        if (code == 429) return "Rate limit reached (429).\n\n" + msg;
         return provider + " error " + code + ". " + msg;
     }
 

@@ -2,6 +2,8 @@ package in.sarkarialert.app;
 
 import android.content.Context;
 
+import java.util.List;
+
 /**
  * Local AI — instant, on-device, zero-delay answers built from the alert's
  * own data and built-in knowledge. Works with NO internet and NO API key.
@@ -28,6 +30,11 @@ final class OfflineBrain {
 
     static String answer(String q, Alert a, Context c) {
         String s = norm(q);
+        // whole-database local intelligence when no specific alert is open
+        if (a == null) {
+            String db = dbAnswer(s, c);
+            if (db != null) return db;
+        }
         if (a != null) {
             if (s.contains("last date") || s.contains("kab hai") || s.contains("kab tak")) {
                 return lastDateAnswer(a);
@@ -145,6 +152,63 @@ final class OfflineBrain {
         }
         sb.append("\nपूरी जानकारी के लिए लिंक खोलें और अ button से पेज हिंदी में पढ़ें।");
         return sb.toString();
+    }
+
+    /** searches / deadline listings straight from the alert database */
+    private static String dbAnswer(String s, Context c) {
+        if (s.contains("notification") || s.contains("help") || s.contains("madad")) return null;
+        Db db = new Db(c);
+        if (s.contains("last date") || s.contains("kab hai") || s.contains("deadline")) {
+            List<Alert> all = db.list("", "all", false);
+            StringBuilder sb = new StringBuilder("\u23F3 Deadlines in your alerts:\n\n");
+            int n = 0;
+            for (Alert x : all) {
+                if (x.lastDate.length() < 10) continue;
+                int d = AlarmScheduler.daysUntil(x.lastDate);
+                if (d < 0 || d > 30 || n >= 8) continue;
+                sb.append("\u2022 ").append(x.title).append(" \u2014 ")
+                  .append(AlarmScheduler.prettyDate(x.lastDate))
+                  .append(" (").append(d).append(" days left)\n");
+                n++;
+            }
+            if (n == 0) return "\u23F3 No deadlines in the next 30 days in your alerts right now.";
+            sb.append("\nAnswered LOCALLY from your own alert data \u2014 instant & offline.");
+            return sb.toString();
+        }
+        String term = pickTerm(s);
+        if (term == null) return null;
+        List<Alert> hits = db.list(term, "all", false);
+        if (hits.isEmpty()) return null;
+        StringBuilder sb = new StringBuilder("\uD83D\uDD0E Found ").append(hits.size())
+                .append(" in your alerts for \"").append(term).append("\":\n\n");
+        int n = 0;
+        for (Alert x : hits) {
+            if (n >= 6) { sb.append("\u2026and more \u2014 type more of the title to narrow down."); break; }
+            sb.append("\u2022 ").append(x.title);
+            if (x.lastDate.length() >= 10 && AlarmScheduler.daysUntil(x.lastDate) >= 0)
+                sb.append(" (last date ").append(AlarmScheduler.prettyDate(x.lastDate)).append(")");
+            sb.append("\n");
+            n++;
+        }
+        sb.append("\nOpen any alert and ask me about it directly.");
+        return sb.toString();
+    }
+
+    /** pick the most meaningful search word from the question */
+    private static String pickTerm(String s) {
+        String[] stop = {"kya", "hai", "hain", "jobs", "job", "result", "results", "sarkari",
+                "government", "govt", "latest", "about", "show", "list", "find", "search",
+                "batao", "alert", "alerts", "the", "and", "for", "what", "when", "which",
+                "news", "any", "please", "assistant", "local", "instant", "this", "that"};
+        String best = null;
+        for (String w : s.split("[^a-z0-9]+")) {
+            if (w.length() < 4) continue;
+            boolean skip = false;
+            for (String st : stop) if (st.equals(w)) { skip = true; break; }
+            if (skip) continue;
+            if (best == null || w.length() > best.length()) best = w;
+        }
+        return best;
     }
 
     private static String norm(String q) {

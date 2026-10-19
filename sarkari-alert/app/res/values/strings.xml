@@ -149,7 +149,7 @@
     <string name="ai_title">AI Assistant</string>
     <string name="ai_details_action">Details</string>
     <string name="ai_setup_title">Connect your free AI key</string>
-    <string name="ai_setup_sub">Paste ANY provider key - Gemini, Groq, DeepSeek, OpenAI or OpenRouter. The provider is auto-detected from the key format. Free keys: aistudio.google.com / console.groq.com / platform.deepseek.com</string>
+    <string name="ai_setup_sub">Paste ANY provider key - Gemini, Groq, DeepSeek, OpenAI or OpenRouter (auto-detected). Multiple keys comma-separated auto-switch when one hits its limit. Free keys: aistudio.google.com / console.groq.com / platform.deepseek.com</string>
     <string name="ai_key_hint">Paste your Gemini API key (AIza…)</string>
     <string name="ai_get_key">Get free key</string>
     <string name="ai_save_start">Save &amp; start</string>
@@ -184,9 +184,19 @@
     <string name="browser_menu_desktop_prefix">Desktop site</string>
     <string name="browser_menu_share">Share page (sends site URL)</string>
     <string name="browser_menu_external">Open in browser app</string>
+    <string name="ai_quick_neural">🧠 Neural (beta)</string>
+    <string name="ai_neural_start">🧠 Loading local neural model — first time downloads ~100 MB (one time), then instant &amp; offline…</string>
+    <string name="ai_neural_empty">🧠 The local model returned nothing — try again, or use ⚡ Local instant.</string>
+    <string name="ai_neural_err">🧠 Local model error: %s\n\nTip: use ⚡ Local instant, or add a cloud key in Settings (auto-detects Groq / Gemini / DeepSeek / OpenAI).</string>
+    <string name="browser_menu_reader">Reader mode — clean text, no ads</string>
+    <string name="browser_reader_on">Reader mode on — tap again to restore the page</string>
+    <string name="browser_menu_copy">Copy link</string>
+    <string name="browser_copied">Link copied</string>
+    <string name="browser_menu_ads">Ads blocked on this page: %%1$d</string>
+
     <string name="settings_ai_title">AI ASSISTANT (GOOGLE GEMINI)</string>
     <string name="settings_ai_sub">Used by the AI assistant and notification answers. Get a free key at aistudio.google.com/app/apikey</string>
-    <string name="settings_ai_key_hint">Gemini API key (AIza…)</string>
+    <string name="settings_ai_key_hint">AI key(s) — Groq / Gemini / DeepSeek / OpenAI… (comma-separate several)</string>
     <string name="settings_ai_save">Save key</string>
     <string name="settings_ai_saved">AI key saved</string>
     <string name="settings_tools_title">TOOLS</string>

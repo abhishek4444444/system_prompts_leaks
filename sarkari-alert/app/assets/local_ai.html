@@ -1,0 +1,39 @@
+<html>
+<head><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body>
+<script type="module">
+import { pipeline, TextStreamer } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.5.1';
+const A = window.Android;
+let pipe = null;
+try {
+  const device = navigator.gpu ? 'webgpu' : 'wasm';
+  A.info(device);
+  pipe = await pipeline('text-generation', 'HuggingFaceTB/SmolLM2-135M-Instruct', {
+    dtype: 'q4f16',
+    device: device,
+    progress_callback: (p) => {
+      try {
+        if (p.status === 'progress') A.progress(p.progress || 0);
+      } catch (e) { }
+    }
+  });
+  A.ready();
+} catch (e) { A.error(String(e)); }
+window.run = async (system, question) => {
+  if (!pipe) { A.error('model not loaded'); return; }
+  try {
+    const streamer = new TextStreamer(pipe.tokenizer, {
+      skip_prompt: true, skip_special_tokens: true,
+      callback_function: (t) => { try { A.token(t); } catch (e) { } }
+    });
+    await pipe(
+      [{ role: 'system', content: system }, { role: 'user', content: question }],
+      { max_new_tokens: 200, do_sample: false, streamer: streamer }
+    );
+    A.done();
+  } catch (e) { A.error(String(e)); }
+};
+A.booted();
+</script>
+</body>
+</html>

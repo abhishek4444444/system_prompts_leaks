@@ -3,6 +3,7 @@ package in.sarkarialert.app;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.Html;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
@@ -41,6 +42,7 @@ public class AiChatActivity extends Activity {
 
     private Alert alert;          // context: alert from a notification
     private String ctxUrl, ctxTitle, ctxSnippet; // context: page from the browser
+    private LocalNeural neural;   // on-device model (beta)
 
     @Override
     protected void onCreate(Bundle b) {
@@ -140,7 +142,8 @@ public class AiChatActivity extends Activity {
         box.removeAllViews();
         String[] labels = {getString(R.string.ai_quick_what), getString(R.string.ai_quick_explain),
                 getString(R.string.ai_quick_summary), getString(R.string.ai_quick_info),
-                getString(R.string.ai_quick_hindi), getString(R.string.ai_quick_local)};
+                getString(R.string.ai_quick_hindi), getString(R.string.ai_quick_local),
+                getString(R.string.ai_quick_neural)};
         for (String label : labels) {
             TextView chip = new TextView(this);
             chip.setText(label);
@@ -157,6 +160,7 @@ public class AiChatActivity extends Activity {
                 @Override public void onClick(View v) {
                     String t = ((TextView) v).getText().toString();
                     if (t.equals(getString(R.string.ai_quick_local))) sendLocal();
+                    else if (t.equals(getString(R.string.ai_quick_neural))) sendNeural();
                     else send(t);
                 }
             });
@@ -220,6 +224,63 @@ public class AiChatActivity extends Activity {
         msgs.add(new Msg("ai", OfflineBrain.answer(q, alert, this), false));
         adapter.notifyDataSetChanged();
         list.smoothScrollToPosition(msgs.size() - 1);
+    }
+
+    /** 🧠 neural chip: real on-device model (download once, then offline) */
+    private void sendNeural() {
+        if (busy) return;
+        String q = input.getText().toString().trim();
+        if (q.length() == 0 && alert != null) q = "Explain this alert simply in short bullet points";
+        if (q.length() == 0) q = "Hi! What can you do?";
+        input.setText("");
+        msgs.add(new Msg("user", q, false));
+        if (neural != null && neural.hasFailed()) {
+            msgs.add(new Msg("ai", getString(R.string.ai_neural_err,
+                    "previous load failed"), false));
+            adapter.notifyDataSetChanged();
+            list.smoothScrollToPosition(msgs.size() - 1);
+            return;
+        }
+        final Msg work = new Msg("ai", getString(R.string.ai_neural_start), false);
+        msgs.add(work);
+        adapter.notifyDataSetChanged();
+        list.smoothScrollToPosition(msgs.size() - 1);
+        final StringBuilder acc = new StringBuilder();
+        if (neural == null) neural = new LocalNeural();
+        android.view.ViewGroup host =
+                (android.view.ViewGroup) findViewById(R.id.neural_host);
+        neural.boot(this, host, new LocalNeural.Cb() {
+            @Override public void onStatus(String msg) {
+                if (msg != null) { work.text = msg; adapter.notifyDataSetChanged(); }
+            }
+            @Override public void onToken(String tok) {
+                acc.append(tok);
+                work.text = acc.toString();
+                adapter.notifyDataSetChanged();
+            }
+            @Override public void onDone(String full) {
+                if (acc.length() == 0) work.text = getString(R.string.ai_neural_empty);
+                adapter.notifyDataSetChanged();
+            }
+            @Override public void onError(String msg) {
+                work.text = getString(R.string.ai_neural_err, msg);
+                adapter.notifyDataSetChanged();
+            }
+        });
+        neural.ask(buildSystem(), q);
+    }
+
+    /** light markdown: bold, bullets, headings — rendered in the bubbles */
+    @SuppressWarnings("deprecation")
+    private static CharSequence md(String t) {
+        if (t == null) return "";
+        String s = t.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+        s = s.replaceAll("(?m)^#{1,6}\\s*(.+)$", "<b>$1</b>");
+        s = s.replaceAll("\\*\\*(.+?)\\*\\*", "<b>$1</b>");
+        s = s.replaceAll("(?m)^\\s*[*\\-•]\\s+", "&bull; ");
+        s = s.replaceAll("`(.+?)`", "$1");
+        s = s.replace("\n", "<br>");
+        return Html.fromHtml(s);
     }
 
     private String buildSystem() {
@@ -303,7 +364,7 @@ public class AiChatActivity extends Activity {
                 else v = getLayoutInflater().inflate(R.layout.item_msg_info, parent, false);
             }
             if (type <= 1) {
-                ((TextView) v.findViewById(R.id.m_text)).setText(m.text);
+                ((TextView) v.findViewById(R.id.m_text)).setText(md(m.text));
             } else {
                 Button view = (Button) v.findViewById(R.id.m_view);
                 view.setOnClickListener(new View.OnClickListener() {

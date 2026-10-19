@@ -132,7 +132,28 @@ public class Db extends SQLiteOpenHelper {
     public void setSaved(long id, boolean saved) {
         ContentValues v = new ContentValues();
         v.put("saved", saved ? 1 : 0);
-        getWritableDatabase().update("alerts", v, "_id=?", new String[]{String.valueOf(id)});
+        getWritableDatabase().update("alerts", v, "_id=?",
+                new String[]{String.valueOf(id)});
+    }
+
+    /** re-run smart categorization on rows that fell through as "other" */
+    public int recategorizeOthers() {
+        Cursor c = getReadableDatabase().rawQuery(
+                "SELECT _id, title FROM alerts WHERE category='other'", null);
+        int n = 0;
+        while (c.moveToNext()) {
+            long id = c.getLong(0);
+            String cat = FeedParser.guessCategory(c.getString(1));
+            if (!"other".equals(cat)) {
+                ContentValues v = new ContentValues();
+                v.put("category", cat);
+                getWritableDatabase().update("alerts", v, "_id=?",
+                        new String[]{String.valueOf(id)});
+                n++;
+            }
+        }
+        c.close();
+        return n;
     }
 
     public List<Alert> savedAlerts() {

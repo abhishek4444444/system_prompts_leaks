@@ -50,7 +50,10 @@ public class FeedParser {
             if (a.title.length() == 0) continue;
             a.org = txt(o, new String[]{"org", "organisation", "organization", "board", "department"});
             String catRaw = txt(o, new String[]{"category", "cat", "sector"});
-            a.category = Alert.categoryCode(catRaw.length() > 0 ? catRaw : guessCategory(a.title));
+            // generic/garbage feed categories ("Latest Jobs") must not kill smart
+            // guessing — fall back to title inference when the tag maps nowhere
+            String cc = Alert.categoryCode(catRaw);
+            a.category = "other".equals(cc) ? Alert.categoryCode(guessCategory(a.title)) : cc;
             a.posts = txt(o, new String[]{"posts", "vacancies", "total_posts", "posts_count"});
             a.qualification = txt(o, new String[]{"qualification", "eligibility", "education"});
             a.fee = txt(o, new String[]{"fee", "application_fee", "fees"});

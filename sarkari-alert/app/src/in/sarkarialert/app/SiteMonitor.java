@@ -66,6 +66,12 @@ public class SiteMonitor {
             db.upsertSite(site("https://scholarships.gov.in/", "page", "National Scholarship Portal"));
             Prefs.setNationalSeeded(c);
         }
+        // one-time: re-categorize rows that fell through as "other" so the
+        // Results / Schemes / Admit chips actually fill up
+        if (!Prefs.recatV2(c)) {
+            db.recategorizeOthers();
+            Prefs.setRecatV2(c);
+        }
     }
 
     private static WatchedSite site(String url, String mode, String label) {
