@@ -73,6 +73,7 @@ public class MainActivity extends Activity {
         liveDot = findViewById(R.id.live_dot);
 
         SiteMonitor.ensureDefaults(this);
+        requestNotificationPermission();
 
         // pulsing live dot
         AlphaAnimation pulse = new AlphaAnimation(1f, 0.25f);
@@ -175,6 +176,15 @@ public class MainActivity extends Activity {
         super.onResume();
         if (mode == MODE_WATCH) loadWatch();
         else reloadAlerts();
+    }
+
+    private void requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= 33) {
+            if (checkSelfPermission("android.permission.POST_NOTIFICATIONS")
+                    != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{"android.permission.POST_NOTIFICATIONS"}, 101);
+            }
+        }
     }
 
     private void startMonitorService() {

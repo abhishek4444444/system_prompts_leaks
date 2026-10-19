@@ -2,6 +2,7 @@ package in.sarkarialert.app;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
@@ -53,6 +54,20 @@ public class SettingsActivity extends Activity {
             }
         });
 
+        findViewById(R.id.btn_notif_settings).setOnClickListener(new View.OnClickListener() {
+            @Override public void onClick(View v) {
+                Intent i = new Intent("android.settings.APP_NOTIFICATION_SETTINGS");
+                i.putExtra("android.provider.extra.APP_PACKAGE", getPackageName());
+                openAny(i);
+            }
+        });
+        findViewById(R.id.btn_battery_settings).setOnClickListener(new View.OnClickListener() {
+            @Override public void onClick(View v) {
+                openAny(new Intent("android.settings.APPLICATION_DETAILS_SETTINGS")
+                        .setData(android.net.Uri.parse("package:" + getPackageName())));
+            }
+        });
+
         findViewById(R.id.dev_ig).setOnClickListener(new View.OnClickListener() {
             @Override public void onClick(View v) {
                 openUrl("https://www.instagram.com/primeedit.in/");
@@ -73,6 +88,19 @@ public class SettingsActivity extends Activity {
         });
 
         renderFeeds();
+    }
+
+    private void openAny(Intent i) {
+        try {
+            startActivity(i);
+        } catch (Exception e) {
+            try {
+                startActivity(new Intent("android.settings.APPLICATION_DETAILS_SETTINGS")
+                        .setData(android.net.Uri.parse("package:" + getPackageName())));
+            } catch (Exception e2) {
+                Toast.makeText(this, "Settings screen not available", Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 
     private void openUrl(String url) {

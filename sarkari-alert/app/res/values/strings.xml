@@ -49,7 +49,7 @@
     <string name="reset_seed">Restore demo data</string>
     <string name="reset_done">Demo data restored</string>
     <string name="about_title">About</string>
-    <string name="about_text">Sarkari Alert v1.1.0\nInstant alerts for government jobs, exams, online forms and schemes — on your phone, zero ads.\n\nData is aggregated from public sources. Always read the official notification before applying. This app is not affiliated with any government body.</string>
+    <string name="about_text">Sarkari Alert v1.2.1\nInstant alerts for government jobs, exams, online forms and schemes — on your phone, zero ads.\n\nData is aggregated from public sources. Always read the official notification before applying. This app is not affiliated with any government body.</string>
     <string name="dev_title">DEVELOPED BY</string>
     <string name="dev_name">Abhishek Kumar Sahani</string>
     <string name="dev_role">Professional Video Editor</string>
@@ -106,4 +106,9 @@
     <string name="remove_confirm">Remove this site from watch?</string>
     <string name="remove">Remove</string>
     <string name="cancel">Cancel</string>
+    <string name="loop_title">Notifications not showing?</string>
+    <string name="loop_sub">Android 13+ needs notification permission, and battery savers can pause background checks. Fix both below.</string>
+    <string name="btn_notif_settings">Open notification settings</string>
+    <string name="btn_battery_settings">Battery &amp; app settings</string>
+    <string name="notif_fallback">Tap to view this update</string>
 </resources>

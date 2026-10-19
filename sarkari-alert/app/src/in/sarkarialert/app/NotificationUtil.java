@@ -77,12 +77,16 @@ public class NotificationUtil {
         }
         if (body.length() == 0 && a.posts.length() > 0) body = a.posts;
         if (body.length() == 0 && a.org.length() > 0) body = a.org;
+        if (body.length() == 0) body = ctx.getString(R.string.notif_fallback);
         Notification n = base(ctx, CH_UPDATES)
                 .setSmallIcon(R.drawable.ic_stat)
                 .setContentTitle(a.title)
                 .setContentText(body)
                 .setStyle(new Notification.BigTextStyle().bigText(body))
                 .setContentIntent(openDetail(ctx, a.id))
+                .setWhen(System.currentTimeMillis())
+                .setShowWhen(true)
+                .setCategory(Notification.CATEGORY_EVENT)
                 .setAutoCancel(true)
                 .build();
         NotificationManager nm = (NotificationManager) ctx.getSystemService(Context.NOTIFICATION_SERVICE);
