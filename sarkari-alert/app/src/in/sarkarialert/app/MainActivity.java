@@ -243,6 +243,7 @@ public class MainActivity extends Activity {
                         float dy = ev.getY() - startY;
                         if (!pulling && atTop && dy > dp(14) && !refreshing) {
                             pulling = true;
+                            pullRing.bringToFront(); // draw above every card
                         }
                         if (pulling) {
                             pullPx = Math.max(0, dy - dp(14)) / 2f; // rubber band

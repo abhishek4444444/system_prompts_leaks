@@ -3,9 +3,8 @@
     <string name="app_name">Sarkari Alert</string>
     <string name="tagline">Government job &amp; form alerts — instantly</string>
     <string name="refresh">Refresh</string>
-    <string name="welcome_hi">Namaste 👋</string>
-    <string name="welcome_from">from</string>
-    <string name="welcome_dev">Abhishek Kumar Sahani</string>
+    <string name="welcome_small">Welcome to</string>
+    <string name="welcome_app">Sarkari Alert</string>
     <string name="welcome_sub">Government jobs, forms &amp; schemes —\non your screen the moment they appear.</string>
     <string name="welcome_cta">Let\'s go</string>
     <string name="new_pill_text">%1$d new — tap to view</string>

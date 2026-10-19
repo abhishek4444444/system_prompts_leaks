@@ -8,34 +8,25 @@
         android:orientation="vertical" android:layout_gravity="center"
         android:gravity="center_horizontal" android:padding="28dp">
 
-        <ImageView android:id="@+id/w_icon" android:layout_width="96dp"
-            android:layout_height="96dp" android:src="@mipmap/ic_launcher"
+        <ImageView android:id="@+id/w_icon" android:layout_width="92dp"
+            android:layout_height="92dp" android:src="@mipmap/ic_launcher"
             android:contentDescription="@string/app_name"/>
 
-        <TextView android:id="@+id/w_hi" android:layout_width="wrap_content"
-            android:layout_height="wrap_content" android:text="@string/welcome_hi"
-            android:textColor="#FFFFFF" android:textSize="34sp" android:textStyle="bold"
-            android:layout_marginTop="26dp"/>
+        <TextView android:id="@+id/w_small" android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:text="@string/welcome_small"
+            android:textColor="#C9D6E2" android:textSize="16sp"
+            android:layout_marginTop="24dp"/>
 
-        <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:orientation="horizontal" android:layout_marginTop="6dp"
-            android:gravity="center_vertical">
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="@string/welcome_from" android:textColor="#9FB3C4"
-                android:textSize="13sp"/>
-            <View android:layout_width="22dp" android:layout_height="1dp"
-                android:background="#55FFFFFF" android:layout_marginLeft="8dp"
-                android:layout_marginRight="8dp"/>
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="@string/welcome_dev" android:textColor="@color/accent"
-                android:textSize="13sp" android:textStyle="bold"/>
-        </LinearLayout>
+        <TextView android:id="@+id/w_app" android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:text="@string/welcome_app"
+            android:textColor="#FFFFFF" android:textSize="34sp" android:textStyle="bold"
+            android:layout_marginTop="4dp"/>
 
         <TextView android:id="@+id/w_sub" android:layout_width="wrap_content"
             android:layout_height="wrap_content" android:text="@string/welcome_sub"
             android:textColor="#C9D6E2" android:textSize="14sp"
             android:lineSpacingExtra="4dp" android:gravity="center"
-            android:layout_marginTop="16dp"/>
+            android:layout_marginTop="18dp"/>
 
         <Button android:id="@+id/w_cta" android:layout_width="wrap_content"
             android:layout_height="wrap_content" android:text="@string/welcome_cta"

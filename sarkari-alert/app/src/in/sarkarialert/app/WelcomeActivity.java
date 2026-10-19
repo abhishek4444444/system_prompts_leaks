@@ -27,7 +27,8 @@ public class WelcomeActivity extends Activity {
 
         long delay = 120;
         delay += rise(findViewById(R.id.w_icon), delay);
-        delay += rise(findViewById(R.id.w_hi), delay);
+        delay += rise(findViewById(R.id.w_small), delay);
+        delay += rise(findViewById(R.id.w_app), delay);
         delay += rise(findViewById(R.id.w_sub), delay);
         rise(findViewById(R.id.w_cta), delay);
 
