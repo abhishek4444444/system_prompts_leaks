@@ -164,7 +164,8 @@ public class MainActivity extends Activity {
 
         buildChips();
         switchMode(MODE_JOBS);
-        startMonitorService();
+        NetWatcher.ensureRegistered(this);
+        JobSchedulerUtil.schedule(this);
 
         if (System.currentTimeMillis() - Prefs.lastRefresh(this) > 6 * 3600000L) {
             doRefresh();
@@ -184,15 +185,6 @@ public class MainActivity extends Activity {
                     != android.content.pm.PackageManager.PERMISSION_GRANTED) {
                 requestPermissions(new String[]{"android.permission.POST_NOTIFICATIONS"}, 101);
             }
-        }
-    }
-
-    private void startMonitorService() {
-        Intent svc = new Intent(this, MonitorService.class);
-        if (Build.VERSION.SDK_INT >= 26) {
-            startForegroundService(svc);
-        } else {
-            startService(svc);
         }
     }
 
@@ -372,23 +364,18 @@ public class MainActivity extends Activity {
         if (refreshing) return;
         refreshing = true;
         status.setText(R.string.refreshing);
-        SiteMonitor.refreshAll(this, ui, new SiteMonitor.Callback() {
+        NetWatcher.refreshOnce(this);
+        // observe completion by a light delayed re-render (fetch runs detached)
+        ui.postDelayed(new Runnable() {
             @Override
-            public void onDone(int added, int total, int ok, List<Alert> fresh) {
+            public void run() {
                 refreshing = false;
-                String msg;
-                if (ok == 0) {
-                    msg = getString(R.string.refresh_fail);
-                } else if (added > 0) {
-                    msg = getString(R.string.refresh_done, added, total);
-                } else {
-                    msg = getString(R.string.refresh_none);
-                }
+                String msg = null;
                 if (mode == MODE_WATCH) loadWatch();
                 else reloadAlerts();
                 updateStatus(msg);
             }
-        });
+        }, 6000);
     }
 
     private float dp(float v) {

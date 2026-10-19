@@ -34,7 +34,7 @@
     <string name="reminder_note">Saved forms notify you 3 days and 1 day before the last date.</string>
     <string name="channel_reminders">Form reminders</string>
     <string name="channel_daily">New updates</string>
-    <string name="channel_monitor">Update monitor</string>
+    <string name="channel_monitor">Background updates</string>
     <string name="reminder_title">Form deadline reminder</string>
     <string name="monitor_title">Sarkari Alert is on watch</string>
     <string name="monitor_text">Instant alerts the moment new govt jobs, forms or schemes appear</string>
@@ -99,9 +99,9 @@
     <string name="time_day">%dd ago</string>
     <string name="notif_page_title">New on %s</string>
     <string name="live_badge">LIVE</string>
-    <string name="monitor_sub_on">Live monitor active · instant alerts on</string>
+    <string name="monitor_sub_on">Instant alerts on — fires the moment internet returns</string>
     <string name="how_title">How instant alerts work</string>
-    <string name="how_text">The app re-checks every source the moment your internet returns, then every 5 minutes. New job, form or scheme on any watched page → instant notification. Saved forms get deadline reminders automatically.</string>
+    <string name="how_text">Zero background drain: the app sleeps until your internet turns on — the system then wakes it for one quick fetch (that is how you get instant alerts), and a system-scheduled backup job runs only on unmetered networks. Offline = no battery use at all.</string>
     <string name="site_error">error: %s</string>
     <string name="remove_confirm">Remove this site from watch?</string>
     <string name="remove">Remove</string>
