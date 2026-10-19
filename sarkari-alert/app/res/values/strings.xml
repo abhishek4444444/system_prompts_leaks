@@ -200,13 +200,15 @@
     <string name="settings_ai_saved">AI key saved</string>
     <string name="settings_tools_title">TOOLS</string>
     <string name="brain_title">Sarkari Brain</string>
-    <string name="brain_sub">100%% local · 0%% internet</string>
+    <string name="brain_sub" formatted="false">100% local · 0% internet</string>
     <string name="brain_cloud">☁ Cloud</string>
-    <string name="brain_hint">Kuch bhi poocho… (offline)</string>
+    <string name="brain_hint">Ask anything… (offline)</string>
     <string name="settings_ai_row">AI Assistant</string>
     <string name="skills_title">Skills</string>
     <string name="skills_sub">Apne AI personas &amp; instructions — Brain + Cloud dono use karte hain</string>
     <string name="skills_add">＋ Add skill</string>
+    <string name="skills_add_file">📄 From file</string>
+    <string name="skills_file_fail">Could not read that file — try a .md/.txt file</string>
     <string name="skills_edit">Edit skill</string>
     <string name="skills_name_hint">Skill name (e.g. My writing style)</string>
     <string name="skills_content_hint">Paste full skill / prompt here (skill.md content)…</string>
@@ -216,7 +218,7 @@
     <string name="skills_save">Save</string>
     <string name="skills_saved">Skill saved</string>
     <string name="skills_deleted">Skill deleted</string>
-    <string name="skills_need_both">Name and content dono chahiye</string>
+    <string name="skills_need_both">Both a name and content are required</string>
     <string name="ai_skills">🎯 Skills</string>
     <string name="settings_skills_row">Skills (AI personas)</string>
 </resources>

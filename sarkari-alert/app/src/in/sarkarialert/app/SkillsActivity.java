@@ -2,6 +2,7 @@ package in.sarkarialert.app;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Intent;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.view.View;
@@ -36,9 +37,68 @@ public class SkillsActivity extends Activity {
             @Override public void onClick(View v) { finish(); }
         });
         findViewById(R.id.skills_add).setOnClickListener(new View.OnClickListener() {
-            @Override public void onClick(View v) { edit(-1); }
+            @Override public void onClick(View v) { edit(-1, null, null); }
+        });
+        findViewById(R.id.skills_add_file).setOnClickListener(new View.OnClickListener() {
+            @Override public void onClick(View v) { pickFile(); }
         });
         render();
+    }
+
+    private void pickFile() {
+        try {
+            Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+            i.addCategory(Intent.CATEGORY_OPENABLE);
+            i.setType("*/*");
+            i.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{
+                    "text/plain", "text/markdown", "application/json",
+                    "application/octet-stream", "text/*"});
+            startActivityForResult(i, 41);
+        } catch (Exception e) {
+            Toast.makeText(this, R.string.skills_file_fail, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode != 41 || resultCode != RESULT_OK
+                || data == null || data.getData() == null) return;
+        try {
+            java.io.InputStream in = getContentResolver().openInputStream(data.getData());
+            java.io.ByteArrayOutputStream bo = new java.io.ByteArrayOutputStream();
+            byte[] buf = new byte[8192];
+            int n, total = 0;
+            while ((n = in.read(buf)) > 0 && total < 200 * 1024) {
+                bo.write(buf, 0, n);
+                total += n;
+            }
+            in.close();
+            String content = bo.toString("UTF-8").trim();
+            if (content.length() == 0) {
+                Toast.makeText(this, R.string.skills_file_fail, Toast.LENGTH_SHORT).show();
+                return;
+            }
+            String name = "";
+            android.database.Cursor c = getContentResolver().query(data.getData(), null, null, null, null);
+            if (c != null) {
+                try {
+                    int idx = c.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME);
+                    if (idx >= 0 && c.moveToFirst()) name = c.getString(idx);
+                } finally {
+                    c.close();
+                }
+            }
+            if (name == null || name.length() == 0) {
+                String last = data.getData().getLastPathSegment();
+                name = last == null ? "" : last.substring(last.lastIndexOf('/') + 1);
+            }
+            int dot = name.lastIndexOf('.');
+            if (dot > 0) name = name.substring(0, dot);
+            edit(-1, name.trim(), content);
+        } catch (Exception e) {
+            Toast.makeText(this, R.string.skills_file_fail, Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void render() {
@@ -125,7 +185,9 @@ public class SkillsActivity extends Activity {
         return row;
     }
 
-    private void edit(final int index) {
+    private void edit(final int index) { edit(index, null, null); }
+
+    private void edit(final int index, String preName, String preContent) {
         JSONArray arr = Prefs.skills(this);
         JSONObject obj = index >= 0 ? arr.optJSONObject(index) : new JSONObject();
 
@@ -136,7 +198,7 @@ public class SkillsActivity extends Activity {
 
         final EditText name = new EditText(this);
         name.setHint(R.string.skills_name_hint);
-        name.setText(obj.optString("name"));
+        name.setText(index >= 0 || preName == null ? obj.optString("name") : preName);
         name.setMaxLines(1);
         ll.addView(name);
 
@@ -145,7 +207,7 @@ public class SkillsActivity extends Activity {
         content.setTextSize(13);
         content.setMinLines(6);
         content.setGravity(android.view.Gravity.TOP);
-        content.setText(obj.optString("content"));
+        content.setText(index >= 0 || preContent == null ? obj.optString("content") : preContent);
         ll.addView(content);
 
         AlertDialog.Builder ab = new AlertDialog.Builder(this)

@@ -164,6 +164,42 @@ public class Prefs {
         return sb.toString();
     }
 
+    // ---------- Brain memory (learned from cloud chats) ----------
+
+    public static JSONArray learned(Context c) {
+        try {
+            return new JSONArray(sp(c).getString("brain_memory_v1", "[]"));
+        } catch (Exception e) {
+            return new JSONArray();
+        }
+    }
+
+    /** store a question/answer pair the cloud AI answered; keeps newest 200 */
+    public static void learn(Context c, String q, String a) {
+        try {
+            if (q == null || a == null) return;
+            q = q.trim(); a = a.trim();
+            if (q.length() < 4 || a.length() < 10) return;
+            if (q.length() > 300) q = q.substring(0, 300);
+            if (a.length() > 2000) a = a.substring(0, 2000);
+            JSONArray old = learned(c);
+            JSONArray out = new JSONArray();
+            JSONObject o = new JSONObject();
+            o.put("q", q);
+            o.put("a", a);
+            o.put("t", System.currentTimeMillis());
+            out.put(o);
+            int cap = 200;
+            for (int i = 0; i < old.length() && out.length() < cap; i++) {
+                JSONObject prev = old.optJSONObject(i);
+                if (prev == null) continue;
+                if (q.equalsIgnoreCase(prev.optString("q"))) continue; // newest wins
+                out.put(prev);
+            }
+            sp(c).edit().putString("brain_memory_v1", out.toString()).apply();
+        } catch (Exception ignored) { }
+    }
+
     public static String[] defaultSources() {
         return new String[]{
                 "https://sarkariresult.com.cm/feed/",

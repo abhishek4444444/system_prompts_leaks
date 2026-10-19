@@ -196,6 +196,7 @@ public class AiChatActivity extends Activity {
         for (int i = from; i < msgs.size() - 1; i++) {
             hist.add(new String[]{msgs.get(i).role, msgs.get(i).text});
         }
+        final String asked = question;
         Llm.ask(key, buildSystem(), hist, new Llm.StreamCb() {
             @Override public void onDelta(final String soFar) {
                 typing.text = soFar;
@@ -209,6 +210,10 @@ public class AiChatActivity extends Activity {
                 } else {
                     String clean = stripFences(reply);
                     msgs.add(new Msg("ai", clean, isHtml(clean)));
+                    // teach the local Brain: plain-text answers become permanent memory
+                    if (!isHtml(clean) && clean.length() > 20 && clean.length() < 2000) {
+                        Prefs.learn(AiChatActivity.this, asked, clean);
+                    }
                 }
                 adapter.notifyDataSetChanged();
                 list.smoothScrollToPosition(msgs.size() - 1);

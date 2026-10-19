@@ -24,11 +24,19 @@
                     android:textSize="11sp"/>
             </LinearLayout>
         </LinearLayout>
-        <Button android:id="@+id/skills_add" android:textAllCaps="false"
-            android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:layout_marginTop="12dp" android:text="@string/skills_add"
-            android:textColor="#FFFFFF" android:textSize="14sp" android:textStyle="bold"
-            android:background="@drawable/bg_button_primary"/>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:layout_marginTop="12dp">
+            <Button android:id="@+id/skills_add" android:textAllCaps="false"
+                android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="wrap_content" android:text="@string/skills_add"
+                android:textColor="#FFFFFF" android:textSize="13sp" android:textStyle="bold"
+                android:background="@drawable/bg_button_primary"/>
+            <Button android:id="@+id/skills_add_file" android:textAllCaps="false"
+                android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="wrap_content" android:text="@string/skills_add_file"
+                android:textColor="@color/accent_dark" android:textSize="13sp" android:textStyle="bold"
+                android:background="@drawable/bg_button_outline" android:layout_marginLeft="8dp"/>
+        </LinearLayout>
     </LinearLayout>
 
     <ScrollView android:layout_width="match_parent" android:layout_height="0dp"
