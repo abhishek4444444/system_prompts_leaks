@@ -19,25 +19,28 @@ def u64(v): return struct.pack("<Q", v)
 def lp(b): return u32(len(b)) + b
 
 def build_v1_files(entry_items, key, cert):
-    """META-INF MANIFEST.MF + CERT.SF + CERT.RSA (JAR signing, RSA SHA-256).
-    entry_items: list of (name_bytes, data_bytes) excluding META-INF/* ."""
+    """META-INF MANIFEST.MF + CERT.SF + CERT.RSA (JAR signing, RSA SHA-256),
+    matching jarsigner/apksigner output structure. entry_items: (name, data) list."""
     import base64, hashlib as _h
     from cryptography.hazmat.primitives import hashes, serialization
-    mf_sections = [b"Manifest-Version: 1.0\r\nCreated-By: 1.0 (Sarkari Alert Builder)\r\n\r\n"]
-    mf_names = []
+    from cryptography.hazmat.primitives.serialization import pkcs7
+    # MANIFEST.MF: main section + one section per file; each section ends with blank line
+    sections = []
     for name, data in entry_items:
         digest = base64.b64encode(_h.sha256(data).digest()).decode()
         sec = ("Name: %s\r\nSHA-256-Digest: %s\r\n\r\n" % (name.decode(), digest)).encode()
-        mf_sections.append(sec)
-        mf_names.append(name.decode())
-    manifest = b"".join(mf_sections)
-
-    sf = b"Signature-Version: 1.0\r\nCreated-By: 1.0 (Sarkari Alert Builder)\r\n"
+        sections.append((name.decode(), sec))
+    manifest = b"Manifest-Version: 1.0\r\nCreated-By: 1.0 (Android)\r\n\r\n" + b"".join(sec for _, sec in sections)
+    # CERT.SF: digest of whole manifest + per-entry digest of that manifest section
+    sf = b"Signature-Version: 1.0\r\n"
+    sf += b"Created-By: 1.0 (Android)\r\n"
+    sf += b"-X-Android-APK-Signed: 2\r\n"
     sf += ("SHA-256-Digest-Manifest: %s\r\n" % base64.b64encode(_h.sha256(manifest).digest()).decode()).encode()
     sf += b"\r\n"
-    for sec in mf_sections[1:]:
-        sf += sec + ("SHA-256-Digest: %s\r\n\r\n" % base64.b64encode(_h.sha256(sec).digest()).decode()).encode()
-    from cryptography.hazmat.primitives.serialization import pkcs7
+    for name, sec in sections:
+        d = base64.b64encode(_h.sha256(sec).digest()).decode()
+        sf += ("Name: %s\r\nSHA-256-Digest: %s\r\n\r\n" % (name, d)).encode()
+    # CERT.RSA: detached PKCS7/CMS over CERT.SF bytes
     p7 = (pkcs7.PKCS7SignatureBuilder()
           .set_data(sf)
           .add_signer(cert, key, hashes.SHA256())
