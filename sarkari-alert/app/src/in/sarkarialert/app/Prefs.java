@@ -85,6 +85,14 @@ public class Prefs {
         sp(c).edit().putLong("last_seen", t).apply();
     }
 
+    public static boolean desktopMode(Context c) {
+        return sp(c).getBoolean("desktop_mode", false);
+    }
+
+    public static void setDesktopMode(Context c, boolean v) {
+        sp(c).edit().putBoolean("desktop_mode", v).apply();
+    }
+
     public static String apiKey(Context c) {
         return sp(c).getString("gemini_key", "");
     }

@@ -44,17 +44,37 @@
                 android:layout_gravity="center" android:src="@drawable/ic_ai"/>
         </FrameLayout>
 
-        <ImageView android:id="@+id/b_external" android:layout_width="34dp"
+        <FrameLayout android:id="@+id/b_more" android:layout_width="34dp"
             android:layout_height="34dp" android:layout_marginLeft="7dp"
-            android:src="@drawable/ic_open" android:padding="8dp"
             android:background="@drawable/bg_row_ripple"
-            android:contentDescription="Open in browser app"/>
+            android:foreground="@drawable/bg_row_ripple" android:clickable="true"
+            android:focusable="true" android:contentDescription="More options">
+            <ImageView android:layout_width="18dp" android:layout_height="18dp"
+                android:layout_gravity="center" android:src="@drawable/ic_more"/>
+        </FrameLayout>
     </LinearLayout>
 
     <ProgressBar android:id="@+id/b_bar" style="?android:attr/progressBarStyleHorizontal"
         android:layout_width="match_parent" android:layout_height="3dp"
         android:max="100" android:progressTint="@color/accent"
         android:progressBackgroundTint="#E4E8EE"/>
+
+    <LinearLayout android:id="@+id/b_rescue" android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:orientation="horizontal"
+        android:gravity="center_vertical" android:background="#FDEEE2"
+        android:paddingLeft="12dp" android:paddingRight="8dp"
+        android:paddingTop="8dp" android:paddingBottom="8dp" android:visibility="gone">
+        <TextView android:layout_width="0dp" android:layout_weight="1"
+            android:layout_height="wrap_content" android:text="@string/browser_rescue_note"
+            android:textSize="12sp" android:textColor="#8A4B12" android:maxLines="2"
+            android:ellipsize="end"/>
+        <TextView android:id="@+id/b_rescue_retry" android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:text="@string/browser_rescue_retry"
+            android:textSize="12sp" android:textStyle="bold" android:textColor="#FFFFFF"
+            android:background="@drawable/bg_button_dark"
+            android:paddingLeft="12dp" android:paddingRight="12dp"
+            android:paddingTop="6dp" android:paddingBottom="6dp" android:layout_marginLeft="8dp"/>
+    </LinearLayout>
 
     <WebView android:id="@+id/b_web" android:layout_width="match_parent"
         android:layout_height="0dp" android:layout_weight="1"/>

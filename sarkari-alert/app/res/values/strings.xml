@@ -175,6 +175,14 @@
     <string name="notif_action_details">Details</string>
     <string name="browser_translating">Translating page…</string>
     <string name="browser_translate_fail">This site blocks translation — tap अ again to go back</string>
+    <string name="browser_rescue_toast">Server down — SiteGuard loaded a live mirror</string>
+    <string name="browser_rescue_note">⚡ SiteGuard: server was down, page loaded via mirror (read-only)</string>
+    <string name="browser_rescue_retry">Try original</string>
+    <string name="browser_menu_desktop_on">Desktop site ✓</string>
+    <string name="browser_menu_desktop_off">Desktop site</string>
+    <string name="browser_menu_desktop_prefix">Desktop site</string>
+    <string name="browser_menu_share">Share page (sends site URL)</string>
+    <string name="browser_menu_external">Open in browser app</string>
     <string name="settings_ai_title">AI ASSISTANT (GOOGLE GEMINI)</string>
     <string name="settings_ai_sub">Used by the AI assistant and notification answers. Get a free key at aistudio.google.com/app/apikey</string>
     <string name="settings_ai_key_hint">Gemini API key (AIza…)</string>

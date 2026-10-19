@@ -26,11 +26,11 @@
 
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                     android:orientation="horizontal" android:gravity="center_vertical">
-                    <FrameLayout android:layout_width="54dp" android:layout_height="54dp"
+                    <FrameLayout android:layout_width="56dp" android:layout_height="56dp"
                         android:background="@drawable/bg_disc_ai">
-                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                            android:layout_gravity="center" android:text="AK" android:textColor="#FFFFFF"
-                            android:textSize="18sp" android:textStyle="bold"/>
+                        <ImageView android:layout_width="52dp" android:layout_height="52dp"
+                            android:layout_gravity="center" android:src="@drawable/dev_avatar"
+                            android:contentDescription="@string/dev_name"/>
                     </FrameLayout>
                     <LinearLayout android:layout_width="0dp" android:layout_weight="1"
                         android:layout_height="wrap_content" android:orientation="vertical"
@@ -59,8 +59,9 @@
                     android:layout_height="wrap_content" android:orientation="horizontal"
                     android:gravity="center_vertical" android:paddingTop="10dp" android:paddingBottom="10dp"
                     android:background="@drawable/bg_row_ripple">
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:text="📸" android:textSize="20sp" android:paddingRight="12dp"/>
+                    <ImageView android:layout_width="24dp" android:layout_height="24dp"
+                        android:src="@drawable/ic_instagram" android:paddingRight="0dp"
+                        android:contentDescription="@string/dev_ig_sub"/>
                     <LinearLayout android:layout_width="0dp" android:layout_weight="1"
                         android:layout_height="wrap_content" android:orientation="vertical">
                         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
@@ -78,8 +79,9 @@
                     android:layout_height="wrap_content" android:orientation="horizontal"
                     android:gravity="center_vertical" android:paddingTop="10dp" android:paddingBottom="10dp"
                     android:background="@drawable/bg_row_ripple">
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:text="▶️" android:textSize="18sp" android:paddingRight="12dp"/>
+                    <ImageView android:layout_width="26dp" android:layout_height="26dp"
+                        android:src="@drawable/ic_youtube"
+                        android:contentDescription="@string/dev_yt_sub"/>
                     <LinearLayout android:layout_width="0dp" android:layout_weight="1"
                         android:layout_height="wrap_content" android:orientation="vertical">
                         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
