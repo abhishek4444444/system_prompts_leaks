@@ -1,0 +1,236 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<effect id="com.alightcreative.effects.gold_motion_cinematic"
+        name="Gold Motion Cinematic"
+        desc="Saarakaththi-style warm golden moody grade: gold highlights, teal shadows, crushed blacks, golden glow bloom, keyframeable gold shimmer sweep, motion trails, vignette and film grain in one pass"
+        category="stylize"
+        thumb="thumb/goldmotioncinematic.png"
+        tags="gold,cinematic,grade,moody,warm,teal,glow,shimmer,motion,trail,vignette,grain,film,look"
+        overdraw="true"
+        max-overdraw="0.35"
+        experimental="false"
+        deprecated="false">
+
+  <params>
+    <texture id="inputImg" srcType="content" />
+
+    <!-- ================= MAIN ================= -->
+    <section text="Main" />
+    <switch id="enableEffect" default="true" label="Enable Effect" />
+    <spinner id="effectIntensity" default="1.0" min="0.0" max="1.0" step="0.01" type="percent" label="Effect Intensity" />
+    <spinner id="globalOpacity" default="1.0" min="0.0" max="1.0" step="0.01" type="percent" label="Global Opacity" />
+
+    <!-- ================= GOLD GRADE ================= -->
+    <section text="Gold Grade (Saarakaththi Look)" />
+    <spinner id="exposure" default="0.10" min="-2.0" max="2.0" step="0.01" label="Exposure (stops)" />
+    <spinner id="contrast" default="1.18" min="0.0" max="2.0" step="0.01" label="Contrast" />
+    <spinner id="blackCrush" default="0.10" min="0.0" max="0.5" step="0.01" type="percent" label="Black Crush (moody)" />
+    <spinner id="gamma" default="1.0" min="0.1" max="3.0" step="0.01" label="Gamma" />
+    <spinner id="temperature" default="0.12" min="-1.0" max="1.0" step="0.01" label="Warmth (Temperature)" />
+    <spinner id="tint" default="0.05" min="-1.0" max="1.0" step="0.01" label="Tint (green-magenta)" />
+    <spinner id="saturation" default="0.92" min="0.0" max="2.0" step="0.01" label="Saturation" />
+    <spinner id="vibrance" default="0.15" min="-1.0" max="1.0" step="0.01" label="Vibrance" />
+    <spinner id="goldStrength" default="0.55" min="0.0" max="1.0" step="0.01" type="percent" label="Gold Highlights Strength" />
+    <spinner id="goldHue" default="42.0" min="0.0" max="360.0" step="1.0" label="Gold Highlight Hue" />
+    <spinner id="tealStrength" default="0.50" min="0.0" max="1.0" step="0.01" type="percent" label="Teal Shadow Strength" />
+    <spinner id="tealHue" default="205.0" min="0.0" max="360.0" step="1.0" label="Teal Shadow Hue" />
+
+    <!-- ================= GLOW ================= -->
+    <section text="Golden Glow" />
+    <spinner id="glowIntensity" default="0.45" min="0.0" max="3.0" step="0.01" label="Glow Intensity" />
+    <spinner id="glowRadius" default="10.0" min="1.0" max="40.0" step="0.1" label="Glow Radius" />
+    <spinner id="glowThreshold" default="0.62" min="0.0" max="1.0" step="0.01" type="percent" label="Glow Threshold" />
+    <spinner id="glowWarmth" default="0.60" min="0.0" max="1.0" step="0.01" type="percent" label="Glow Gold Warmth" />
+
+    <!-- ================= GOLD SHIMMER SWEEP ================= -->
+    <section text="Gold Shimmer Sweep (keyframe sweep 0 to 1)" />
+    <spinner id="shimmerStrength" default="0.35" min="0.0" max="2.0" step="0.01" label="Shimmer Strength" />
+    <spinner id="sweepPosition" default="0.35" min="0.0" max="1.0" step="0.01" type="percent" label="Sweep Position (animate me)" />
+    <spinner id="sweepWidth" default="0.12" min="0.01" max="0.5" step="0.01" type="percent" label="Sweep Width" />
+    <spinner id="sweepAngle" default="-30.0" min="-180.0" max="180.0" step="0.1" label="Sweep Angle" />
+    <spinner id="shimmerScale" default="8.0" min="1.0" max="20.0" step="0.1" label="Shimmer Sparkle Scale" />
+
+    <!-- ================= MOTION TRAIL ================= -->
+    <section text="Motion Trail" />
+    <spinner id="motionStrength" default="0.0" min="0.0" max="1.0" step="0.01" type="percent" label="Trail Strength" />
+    <spinner id="motionDirection" default="0.0" min="-360.0" max="360.0" step="0.1" label="Trail Direction" />
+    <spinner id="trailStep" default="2.5" min="0.0" max="10.0" step="0.01" label="Trail Length" />
+    <spinner id="trailDecay" default="0.60" min="0.0" max="0.98" step="0.01" type="percent" label="Trail Decay" />
+
+    <!-- ================= LOOK ================= -->
+    <section text="Look" />
+    <spinner id="vignetteAmount" default="0.35" min="0.0" max="1.0" step="0.01" type="percent" label="Vignette Amount" />
+    <spinner id="vignetteSoftness" default="0.50" min="0.0" max="1.0" step="0.01" type="percent" label="Vignette Softness" />
+    <spinner id="grainAmount" default="0.02" min="0.0" max="0.2" step="0.001" label="Film Grain" />
+    <spinner id="grainSeed" default="7.0" min="0.0" max="100.0" step="0.1" label="Grain Seed" />
+
+    <!-- ================= BLEND ================= -->
+    <section text="Blend" />
+    <selector id="blendMode" style="dropdown" default="0" label="Blend Mode">
+      <choice label="Normal" value="0" />
+      <choice label="Screen" value="1" />
+      <choice label="Add" value="2" />
+      <choice label="Overlay" value="3" />
+      <choice label="Soft Light" value="4" />
+      <choice label="Hard Light" value="5" />
+      <choice label="Multiply" value="6" />
+      <choice label="Difference" value="7" />
+      <choice label="Exclusion" value="8" />
+      <choice label="Color Dodge" value="9" />
+      <choice label="Linear Dodge" value="10" />
+    </selector>
+    <spinner id="blendOpacity" default="1.0" min="0.0" max="1.0" step="0.01" type="percent" label="Blend Opacity" />
+  </params>
+
+  <shader type="fragment" precision="high"><![CDATA[
+    // ---------- Resolution / sampling helpers ----------
+    vec2 getResolution(){ vec2 s=getTexSize(inputImg.size); if(s.x<=0.0||s.y<=0.0) s=vec2(1920.0,1080.0); return s; }
+    vec4 sampleSrc(vec2 uv01){ return texture2DCv(inputImg.texture, uv01); }
+    float luma(vec3 c){ return dot(c, vec3(0.299,0.587,0.114)); }
+
+    // ---------- Noise / hash ----------
+    float hash21(vec2 p){ p=fract(p*vec2(123.34,456.21)); p+=dot(p,p+45.32); return fract(p.x*p.y); }
+    float vnoise(vec2 p){
+      vec2 i=floor(p), f=fract(p); f=f*f*(3.0-2.0*f);
+      float a=hash21(i), b=hash21(i+vec2(1.0,0.0)), c=hash21(i+vec2(0.0,1.0)), d=hash21(i+vec2(1.0,1.0));
+      return mix(mix(a,b,f.x), mix(c,d,f.x), f.y);
+    }
+    vec3 hueToRGB(float h){
+      h=fract(h);
+      float r=abs(h*6.0-3.0)-1.0;
+      float g=2.0-abs(h*6.0-2.0);
+      float b=2.0-abs(h*6.0-4.0);
+      return clamp(vec3(r,g,b),0.0,1.0);
+    }
+
+    // ---------- Blend kernels ----------
+    vec3 blendScreen(vec3 a, vec3 b){ return 1.0-(1.0-a)*(1.0-b); }
+    vec3 blendAdd(vec3 a, vec3 b){ return min(a+b, vec3(1.0)); }
+    vec3 blendMultiply(vec3 a, vec3 b){ return a*b; }
+    vec3 blendOverlay(vec3 a, vec3 b){ return mix(2.0*a*b, 1.0-2.0*(1.0-a)*(1.0-b), step(0.5,a)); }
+    vec3 blendHardLight(vec3 a, vec3 b){ return mix(2.0*a*b, 1.0-2.0*(1.0-a)*(1.0-b), step(0.5,b)); }
+    vec3 blendSoftLight(vec3 a, vec3 b){
+      vec3 low=2.0*a*b+a*a*(1.0-2.0*b);
+      vec3 high=sqrt(max(a,0.0))*(2.0*b-1.0)+2.0*a*(1.0-b);
+      return mix(low,high,step(0.5,b));
+    }
+    vec3 blendDifference(vec3 a, vec3 b){ return abs(a-b); }
+    vec3 blendExclusion(vec3 a, vec3 b){ return a+b-2.0*a*b; }
+    vec3 blendColorDodge(vec3 a, vec3 b){ return min(vec3(1.0), a/max(vec3(1.0)-b, vec3(0.0001))); }
+    vec3 applyBlendMode(int mode, vec3 base, vec3 blend){
+      if(mode==1) return blendScreen(base, blend);
+      if(mode==2) return blendAdd(base, blend);
+      if(mode==3) return blendOverlay(base, blend);
+      if(mode==4) return blendSoftLight(base, blend);
+      if(mode==5) return blendHardLight(base, blend);
+      if(mode==6) return blendMultiply(base, blend);
+      if(mode==7) return blendDifference(base, blend);
+      if(mode==8) return blendExclusion(base, blend);
+      if(mode==9) return blendColorDodge(base, blend);
+      if(mode==10) return blendAdd(base, blend); // Linear Dodge == Add
+      return blend; // Normal
+    }
+
+    // ---------- Warm golden moody grade ----------
+    vec3 goldGrade(vec3 c){
+      // Exposure then contrast around mid-grey
+      c *= pow(2.0, exposure);
+      c = (c-0.5)*contrast + 0.5;
+      // Crush blacks for the moody base
+      c = max(c-blackCrush, 0.0) / max(1.0-blackCrush, 0.001);
+      // Gamma
+      c = pow(max(c,0.0), vec3(1.0/max(gamma,0.001)));
+      // Temperature / tint
+      c.r += temperature*0.12;
+      c.b -= temperature*0.12;
+      c.g += tint*0.10;
+      c.r -= tint*0.05;
+      c.b -= tint*0.05;
+      // Saturation + vibrance
+      float g = luma(c);
+      c = mix(vec3(g), c, saturation);
+      float mx = max(c.r, max(c.g,c.b));
+      float mn = min(c.r, min(c.g,c.b));
+      float sat = mx-mn;
+      c = mix(vec3(luma(c)), c, 1.0 + vibrance*(1.0-sat));
+      // Split-tone: gold highlights + teal shadows
+      float l = luma(c);
+      float hiW = smoothstep(0.45, 1.0, l);
+      float shW = 1.0 - smoothstep(0.0, 0.62, l);
+      vec3 goldTint = hueToRGB(goldHue/360.0);
+      vec3 tealTint = hueToRGB(tealHue/360.0);
+      c *= mix(vec3(1.0), goldTint*1.35, goldStrength*hiW);
+      c *= mix(vec3(1.0), tealTint*1.50, tealStrength*shW);
+      return clamp(c, 0.0, 1.0);
+    }
+
+    void main(){
+      vec2 res = getResolution();
+      vec2 srcUV = acScreenNorm;
+      vec4 originalSrc = sampleSrc(srcUV);
+
+      if(!enableEffect){ gl_FragColor = originalSrc; return; }
+
+      // ---------- Motion trail (echo/decay smear) ----------
+      vec2 trailDir = vec2(cos(radians(motionDirection)), sin(radians(motionDirection)));
+      vec3 trailSum = vec3(0.0);
+      float trailW = 0.0;
+      for(int i=0;i<8;i++){
+        float fi = float(i);
+        float decayW = pow(clamp(trailDecay,0.0,0.98), fi);
+        vec2 offs = trailDir * fi * trailStep * 4.0 / res;
+        trailSum += sampleSrc(srcUV+offs).rgb * decayW;
+        trailW += decayW;
+      }
+      vec3 trailColor = trailSum / max(trailW,0.0001);
+      vec3 baseColor = mix(originalSrc.rgb, trailColor, motionStrength);
+
+      // ---------- Warm golden moody grade ----------
+      vec3 graded = goldGrade(baseColor);
+
+      // ---------- Golden glow (soft bright-pass bloom) ----------
+      float glowR = glowRadius * 0.0015;
+      vec3 glowAccum = vec3(0.0);
+      for(int i=0;i<8;i++){
+        float ang = (float(i)/8.0) * 6.28318530718;
+        vec2 gOff = vec2(cos(ang), sin(ang)) * glowR;
+        vec3 gs = sampleSrc(srcUV+gOff).rgb;
+        float gl = luma(gs);
+        glowAccum += gs * step(glowThreshold, gl);
+      }
+      vec3 glowColor = (glowAccum/8.0) * glowIntensity;
+      glowColor = mix(glowColor, glowColor * vec3(1.15,0.95,0.62), glowWarmth);
+      graded += glowColor;
+
+      // ---------- Gold shimmer sweep (keyframe sweepPosition 0 to 1) ----------
+      vec2 sweepDir = vec2(cos(radians(sweepAngle)), sin(radians(sweepAngle)));
+      float d = dot(srcUV-0.5, sweepDir) + 0.5;
+      float pos = fract(sweepPosition);
+      float xw = (d-pos) / max(sweepWidth, 0.001);
+      float band = exp(-xw*xw);
+      float sparkle = vnoise(srcUV*res/max(shimmerScale,0.001)*0.08 + sweepPosition*13.0);
+      sparkle = 0.35 + 0.65*smoothstep(0.35, 0.95, sparkle);
+      float gleam = band * shimmerStrength * sparkle;
+      graded += vec3(1.0, 0.78, 0.36) * gleam;
+
+      // ---------- Vignette ----------
+      vec2 vuv = (srcUV-0.5) * vec2(res.x/max(res.y,1.0), 1.0);
+      float vr = length(vuv) / 0.78;
+      float vig = 1.0 - vignetteAmount * smoothstep(1.0-vignetteSoftness*0.9, 1.35, vr);
+      graded *= vig;
+
+      // ---------- Film grain ----------
+      float gr = (hash21(floor(srcUV*res) + vec2(grainSeed)) - 0.5) * grainAmount;
+      graded += vec3(gr);
+
+      // ---------- Blend / intensity / output ----------
+      vec3 blended = applyBlendMode(blendMode, originalSrc.rgb, clamp(graded,0.0,1.0));
+      vec3 finalColor = mix(originalSrc.rgb, blended, blendOpacity);
+      finalColor = clamp(finalColor, 0.0, 1.0);
+      vec3 outColor = mix(originalSrc.rgb, finalColor, effectIntensity);
+      float outAlpha = originalSrc.a * globalOpacity;
+
+      gl_FragColor = vec4(outColor, outAlpha);
+    }
+  ]]></shader>
+
+</effect>
