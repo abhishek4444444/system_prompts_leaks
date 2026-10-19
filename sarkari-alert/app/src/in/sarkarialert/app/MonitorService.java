@@ -99,14 +99,14 @@ public class MonitorService extends Service {
         if (refreshing) return;
         refreshing = true;
         final Context app = getApplicationContext();
-        FeedLoader.refresh(app, ui, new FeedLoader.Callback() {
+        SiteMonitor.refreshAll(app, ui, new SiteMonitor.Callback() {
             @Override
-            public void onDone(int added, int sources, boolean anySuccess, List<Alert> fresh) {
+            public void onDone(int added, int total, int ok, List<Alert> fresh) {
                 refreshing = false;
                 if (added > 0 && fresh != null) {
                     int shown = 0;
                     for (Alert a : fresh) {
-                        if (shown >= 3) break; // don't spam: bundle rest into daily digest
+                        if (shown >= 3) break; // don't spam: rest surface in-app
                         NotificationUtil.notifyNewAlert(app, a);
                         shown++;
                     }

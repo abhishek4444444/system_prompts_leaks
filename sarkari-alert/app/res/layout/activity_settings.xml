@@ -114,6 +114,18 @@
                 </LinearLayout>
             </LinearLayout>
 
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="vertical" android:background="@drawable/bg_card"
+                android:padding="14dp" android:layout_marginTop="10dp">
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:text="@string/how_title" android:textSize="14sp"
+                    android:textColor="@color/text_main" android:textStyle="bold"/>
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:text="@string/how_text" android:textSize="12sp"
+                    android:textColor="@color/text_sub" android:lineSpacingExtra="3dp"
+                    android:layout_marginTop="4dp"/>
+            </LinearLayout>
+
             <Button android:id="@+id/reset_seed" android:layout_width="match_parent"
                 android:layout_height="wrap_content" android:text="@string/reset_seed"
                 android:textColor="@color/accent_dark" android:textSize="13sp"

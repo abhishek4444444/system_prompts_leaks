@@ -69,6 +69,14 @@ public class Prefs {
         setSources(c, list.toArray(new String[list.size()]));
     }
 
+    public static boolean sitesMigrated(Context c) {
+        return sp(c).getBoolean("sites_migrated", false);
+    }
+
+    public static void setSitesMigrated(Context c) {
+        sp(c).edit().putBoolean("sites_migrated", true).apply();
+    }
+
     public static String[] defaultSources() {
         return new String[]{
                 "https://sarkariresult.com.cm/feed/",

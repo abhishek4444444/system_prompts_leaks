@@ -7,52 +7,77 @@
     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
         android:orientation="vertical" android:background="@drawable/bg_header"
         android:paddingLeft="16dp" android:paddingRight="16dp"
-        android:paddingTop="14dp" android:paddingBottom="14dp">
+        android:paddingTop="16dp" android:paddingBottom="12dp">
 
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
             android:orientation="horizontal" android:gravity="center_vertical">
             <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
                 android:layout_weight="1" android:orientation="vertical">
-                <TextView android:id="@+id/title" android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" android:text="@string/app_name"
-                    android:textColor="#FFFFFF" android:textSize="22sp" android:textStyle="bold"/>
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:text="@string/tagline" android:textColor="#C9D6E2" android:textSize="12sp"/>
+                <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:orientation="horizontal" android:gravity="center_vertical">
+                    <TextView android:id="@+id/title" android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" android:text="@string/app_name"
+                        android:textColor="#FFFFFF" android:textSize="21sp" android:textStyle="bold"/>
+                    <LinearLayout android:id="@+id/live_badge" android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" android:orientation="horizontal"
+                        android:background="@drawable/bg_live_pill" android:gravity="center_vertical"
+                        android:paddingLeft="8dp" android:paddingRight="8dp"
+                        android:paddingTop="3dp" android:paddingBottom="3dp"
+                        android:layout_marginLeft="10dp">
+                        <View android:id="@+id/live_dot" android:layout_width="7dp"
+                            android:layout_height="7dp" android:background="@drawable/dot_live"/>
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="@string/live_badge" android:textColor="@color/live_green"
+                            android:textSize="10sp" android:textStyle="bold" android:layout_marginLeft="5dp"/>
+                    </LinearLayout>
+                </LinearLayout>
+                <TextView android:id="@+id/subtitle" android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" android:text="@string/tagline"
+                    android:textColor="#C9D6E2" android:textSize="11sp" android:layout_marginTop="2dp"
+                    android:maxLines="1" android:ellipsize="end"/>
             </LinearLayout>
             <Button android:id="@+id/btn_refresh" android:layout_width="wrap_content"
                 android:layout_height="wrap_content" android:text="@string/refresh"
-                android:textColor="#FFFFFF" android:textSize="13sp"
+                android:textColor="#FFFFFF" android:textSize="12sp" android:textStyle="bold"
                 android:background="@drawable/bg_button_primary"
                 android:paddingLeft="16dp" android:paddingRight="16dp"/>
         </LinearLayout>
 
         <EditText android:id="@+id/search" android:layout_width="match_parent"
             android:layout_height="wrap_content" android:hint="@string/search_hint"
-            android:textColorHint="#8FA5B8" android:textColor="#FFFFFF"
-            android:textSize="14sp" android:maxLines="1" android:inputType="text"
-            android:paddingTop="8dp" android:background="@null"/>
+            android:textColorHint="#7E93A8" android:textColor="#FFFFFF"
+            android:textSize="13sp" android:maxLines="1" android:inputType="text"
+            android:paddingLeft="12dp" android:paddingRight="12dp"
+            android:paddingTop="9dp" android:paddingBottom="9dp"
+            android:layout_marginTop="10dp" android:background="@drawable/bg_search"/>
 
         <HorizontalScrollView android:layout_width="match_parent"
             android:layout_height="wrap_content" android:scrollbars="none"
-            android:layout_marginTop="8dp">
+            android:layout_marginTop="10dp" android:id="@+id/chips_scroll">
             <LinearLayout android:id="@+id/chips" android:layout_width="wrap_content"
                 android:layout_height="wrap_content" android:orientation="horizontal"/>
         </HorizontalScrollView>
 
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:orientation="horizontal" android:layout_marginTop="10dp">
+            android:orientation="horizontal" android:layout_marginTop="12dp"
+            android:background="@drawable/bg_search" android:padding="3dp">
             <TextView android:id="@+id/tab_jobs" android:layout_width="0dp" android:layout_weight="1"
                 android:layout_height="wrap_content" android:gravity="center"
-                android:text="@string/tab_jobs" android:textColor="#FFFFFF" android:textSize="14sp"
-                android:padding="8dp" android:textStyle="bold"/>
+                android:text="@string/tab_jobs" android:textSize="13sp" android:textStyle="bold"
+                android:background="@drawable/bg_segment_active" android:paddingTop="7dp"
+                android:paddingBottom="7dp"/>
             <TextView android:id="@+id/tab_saved" android:layout_width="0dp" android:layout_weight="1"
                 android:layout_height="wrap_content" android:gravity="center"
-                android:text="@string/tab_saved" android:textColor="#9FB3C4" android:textSize="14sp"
-                android:padding="8dp"/>
+                android:text="@string/tab_saved" android:textSize="13sp"
+                android:paddingTop="7dp" android:paddingBottom="7dp"/>
+            <TextView android:id="@+id/tab_watch" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="wrap_content" android:gravity="center"
+                android:text="@string/tab_watch" android:textSize="13sp"
+                android:paddingTop="7dp" android:paddingBottom="7dp"/>
             <TextView android:id="@+id/tab_settings" android:layout_width="0dp" android:layout_weight="1"
                 android:layout_height="wrap_content" android:gravity="center"
-                android:text="@string/tab_settings" android:textColor="#9FB3C4" android:textSize="14sp"
-                android:padding="8dp"/>
+                android:text="@string/tab_settings" android:textSize="13sp"
+                android:paddingTop="7dp" android:paddingBottom="7dp"/>
         </LinearLayout>
     </LinearLayout>
 
@@ -62,10 +87,12 @@
             android:layout_height="match_parent" android:divider="@color/divider"
             android:dividerHeight="1dp" android:paddingLeft="10dp" android:paddingRight="10dp"
             android:paddingTop="6dp" android:paddingBottom="6dp"
-            android:scrollbars="none" android:cacheColorHint="@android:color/transparent"/>
+            android:scrollbars="none" android:cacheColorHint="@android:color/transparent"
+            android:layoutAnimation="@anim/layout_slide"/>
         <TextView android:id="@+id/empty" android:layout_width="wrap_content"
             android:layout_height="wrap_content" android:layout_gravity="center"
-            android:gravity="center" android:textSize="15sp" android:textColor="@color/text_sub"/>
+            android:gravity="center" android:textSize="14sp" android:textColor="@color/text_sub"
+            android:lineSpacingExtra="4dp"/>
     </FrameLayout>
 
     <TextView android:id="@+id/status" android:layout_width="match_parent"

@@ -15,4 +15,20 @@
     <color name="orange_bg">#FDEEE2</color>
     <color name="blue_bg">#E7EFF7</color>
     <color name="divider">#E4E8EE</color>
+    <color name="navy_1">#0B1E33</color>
+    <color name="navy_2">#12263E</color>
+    <color name="navy_3">#1B3A5C</color>
+    <color name="live_green">#22C55E</color>
+    <color name="cat_railway">#E23744</color>
+    <color name="cat_ssc">#2563EB</color>
+    <color name="cat_upsc">#7C3AED</color>
+    <color name="cat_banking">#059669</color>
+    <color name="cat_defence">#B45309</color>
+    <color name="cat_police">#1D4ED8</color>
+    <color name="cat_teaching">#DB2777</color>
+    <color name="cat_state">#0F766E</color>
+    <color name="cat_psu">#CA8A04</color>
+    <color name="cat_job">#475569</color>
+    <color name="cat_other">#64748B</color>
+    <color name="cat_news">#0891B2</color>
 </resources>

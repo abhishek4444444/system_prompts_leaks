@@ -11,7 +11,7 @@ import java.util.List;
 
 public class Db extends SQLiteOpenHelper {
     private static final String DB = "sarkari.db";
-    private static final int VER = 1;
+    private static final int VER = 2;
 
     public Db(Context c) {
         super(c, DB, null, VER);
@@ -19,6 +19,10 @@ public class Db extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
+        db.execSQL("CREATE TABLE IF NOT EXISTS sites (_id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                "url TEXT UNIQUE, label TEXT, mode TEXT DEFAULT 'page', enabled INTEGER DEFAULT 1," +
+                "last_hash TEXT, snapshot TEXT, last_checked INTEGER DEFAULT 0," +
+                "last_error TEXT, last_new INTEGER DEFAULT 0, created_at INTEGER)");
         db.execSQL("CREATE TABLE alerts (_id INTEGER PRIMARY KEY AUTOINCREMENT," +
                 "hash TEXT UNIQUE, title TEXT, org TEXT, category TEXT, posts TEXT," +
                 "qualification TEXT, fee TEXT, apply_start TEXT, last_date TEXT," +
@@ -28,6 +32,12 @@ public class Db extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int o, int n) {
+        if (o < 2) {
+            db.execSQL("CREATE TABLE IF NOT EXISTS sites (_id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                    "url TEXT UNIQUE, label TEXT, mode TEXT DEFAULT 'page', enabled INTEGER DEFAULT 1," +
+                    "last_hash TEXT, snapshot TEXT, last_checked INTEGER DEFAULT 0," +
+                    "last_error TEXT, last_new INTEGER DEFAULT 0, created_at INTEGER)");
+        }
     }
 
     private static ContentValues cv(Alert a, long now) {
@@ -103,6 +113,14 @@ public class Db extends SQLiteOpenHelper {
         return n;
     }
 
+    public long getCreated(long id) {
+        Cursor c = getReadableDatabase().rawQuery(
+                "SELECT created_at FROM alerts WHERE _id=?", new String[]{String.valueOf(id)});
+        long t = c.moveToFirst() ? c.getLong(0) : 0;
+        c.close();
+        return t;
+    }
+
     public void setSaved(long id, boolean saved) {
         ContentValues v = new ContentValues();
         v.put("saved", saved ? 1 : 0);
@@ -160,5 +178,74 @@ public class Db extends SQLiteOpenHelper {
     private static String s(Cursor c, String col) {
         String v = c.getString(c.getColumnIndexOrThrow(col));
         return v == null ? "" : v;
+    }
+
+    // ---------- sites (watch engine) ----------
+
+    public boolean upsertSite(WatchedSite w) {
+        SQLiteDatabase db = getWritableDatabase();
+        Cursor c = db.rawQuery("SELECT _id FROM sites WHERE url=?", new String[]{w.url});
+        boolean exists = c.moveToFirst();
+        c.close();
+        if (exists) return false;
+        ContentValues v = new ContentValues();
+        v.put("url", w.url);
+        v.put("label", w.label);
+        v.put("mode", w.mode);
+        v.put("enabled", w.enabled ? 1 : 0);
+        v.put("last_hash", w.lastHash);
+        v.put("snapshot", w.snapshot);
+        v.put("last_checked", w.lastChecked);
+        v.put("last_error", w.lastError);
+        v.put("last_new", w.lastNew);
+        v.put("created_at", System.currentTimeMillis());
+        db.insertWithOnConflict("sites", null, v, SQLiteDatabase.CONFLICT_IGNORE);
+        return true;
+    }
+
+    public List<WatchedSite> listSites() {
+        Cursor c = getReadableDatabase().rawQuery(
+                "SELECT * FROM sites ORDER BY _id ASC", null);
+        List<WatchedSite> out = new ArrayList<WatchedSite>();
+        while (c.moveToNext()) out.add(siteFromCursor(c));
+        c.close();
+        return out;
+    }
+
+    public int sitesCount() {
+        Cursor c = getReadableDatabase().rawQuery("SELECT COUNT(*) FROM sites", null);
+        int n = c.moveToFirst() ? c.getInt(0) : 0;
+        c.close();
+        return n;
+    }
+
+    public void deleteSite(long id) {
+        getWritableDatabase().delete("sites", "_id=?", new String[]{String.valueOf(id)});
+    }
+
+    public void updateSiteState(long id, String hash, String snapshot, long checked,
+                                String error, int newCount) {
+        ContentValues v = new ContentValues();
+        v.put("last_hash", hash);
+        v.put("snapshot", snapshot);
+        v.put("last_checked", checked);
+        v.put("last_error", error);
+        v.put("last_new", newCount);
+        getWritableDatabase().update("sites", v, "_id=?", new String[]{String.valueOf(id)});
+    }
+
+    private static WatchedSite siteFromCursor(Cursor c) {
+        WatchedSite w = new WatchedSite();
+        w.id = c.getLong(c.getColumnIndexOrThrow("_id"));
+        w.url = c.getString(c.getColumnIndexOrThrow("url"));
+        w.label = c.getString(c.getColumnIndexOrThrow("label"));
+        w.mode = c.getString(c.getColumnIndexOrThrow("mode"));
+        w.enabled = c.getInt(c.getColumnIndexOrThrow("enabled")) == 1;
+        w.lastHash = c.getString(c.getColumnIndexOrThrow("last_hash"));
+        w.snapshot = c.getString(c.getColumnIndexOrThrow("snapshot"));
+        w.lastChecked = c.getLong(c.getColumnIndexOrThrow("last_checked"));
+        w.lastError = c.getString(c.getColumnIndexOrThrow("last_error"));
+        w.lastNew = c.getInt(c.getColumnIndexOrThrow("last_new"));
+        return w;
     }
 }

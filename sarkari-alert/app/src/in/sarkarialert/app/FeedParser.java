@@ -126,7 +126,7 @@ public class FeedParser {
         return "";
     }
 
-    private static String guessCategory(String title) {
+    public static String guessCategory(String title) {
         if (title == null) return "job";
         String s = title.toLowerCase();
         if (s.contains("railway") || s.contains("rrb") || s.contains("ntpc") || s.contains("group d")) return "railway";
