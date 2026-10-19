@@ -78,6 +78,13 @@ final class OfflineBrain {
         String sk = skillAnswer(s, c);
         if (sk != null) return sk;
 
+        // --- image generation lives in the cloud screen (needs internet) ---
+        if (AiChatActivity.isImageRequest(q)) {
+            return "🎨 Image generation needs the internet, so it runs in the Cloud AI screen.\n\n"
+                    + "Tap \"☁ Cloud AI\" at the top and send the same request there — it will generate instantly. "
+                    + "No API key is needed for images.\n\nI stay 100% offline for everything else. 🧠";
+        }
+
         // --- small talk ---
         if (isGreeting(s)) {
             int mem = Prefs.learned(c).length();

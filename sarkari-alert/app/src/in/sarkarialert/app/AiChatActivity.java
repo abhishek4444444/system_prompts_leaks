@@ -44,6 +44,7 @@ public class AiChatActivity extends Activity {
     private android.widget.ImageView sendIcon;
     private View setup, chatArea;
     private boolean busy;
+    private volatile boolean imgCancelled;
 
     private Alert alert;          // context: alert from a notification
     private String ctxUrl, ctxTitle, ctxSnippet; // context: page from the browser
@@ -155,7 +156,7 @@ public class AiChatActivity extends Activity {
         buildChips();
         findViewById(R.id.ai_send).setOnClickListener(new View.OnClickListener() {
             @Override public void onClick(View v) {
-                if (busy) Llm.cancel();
+                if (busy) { Llm.cancel(); imgCancelled = true; }
                 else send(input.getText().toString());
             }
         });
@@ -196,6 +197,13 @@ public class AiChatActivity extends Activity {
     private void send(String text) {
         final String question = text == null ? "" : text.trim();
         if (question.length() == 0 || busy) return;
+        // "create an image of ..." typed naturally → straight to the image
+        // generator, never to the text LLM (it would only refuse)
+        if (isImageRequest(question)) {
+            input.setText("");
+            generateImage(cleanImagePrompt(question), question);
+            return;
+        }
         input.setText("");
         msgs.add(new Msg("user", question, false));
         adapter.notifyDataSetChanged();
@@ -205,6 +213,7 @@ public class AiChatActivity extends Activity {
         if (key.length() == 0) {
             // no cloud key — the LOCAL brain answers instantly, offline
             msgs.add(new Msg("ai", OfflineBrain.answer(question, alert, this), false));
+            sendIcon.setImageResource(R.drawable.ic_send);
             adapter.notifyDataSetChanged();
             list.smoothScrollToPosition(msgs.size() - 1);
             return;
@@ -260,7 +269,7 @@ public class AiChatActivity extends Activity {
         list.smoothScrollToPosition(msgs.size() - 1);
     }
 
-    /** 🎨 text-to-image via Pollinations (free Flux model, no key needed) */
+    /** 🎨 chip: generate an image from whatever is typed */
     private void sendImage() {
         if (busy) return;
         final String prompt = input.getText().toString().trim();
@@ -269,46 +278,144 @@ public class AiChatActivity extends Activity {
             return;
         }
         input.setText("");
-        msgs.add(new Msg("user", "🎨 " + prompt, false));
+        generateImage(cleanImagePrompt(prompt), "🎨 " + prompt);
+    }
+
+    /** does this plain-typed message ask for an image? (no chip needed) */
+    static boolean isImageRequest(String raw) {
+        if (raw == null) return false;
+        String q = raw.trim().toLowerCase(java.util.Locale.US);
+        if (q.length() == 0) return false;
+        if (q.startsWith("🎨")) return true;
+        if (q.startsWith("/image") || q.startsWith("/imagine")) return true;
+        String[] strong = {
+            "generate image", "generate an image", "generate a image",
+            "create image", "create an image", "create a image",
+            "make image", "make an image", "make a image",
+            "generate picture", "create picture", "make picture",
+            "generate photo", "create photo", "make photo",
+            "image banao", "image bana do", "tasveer banao", "tasvir banao",
+            "photo banao", "picture banao", "drawing banao",
+            "text to image", "txt2img"
+        };
+        for (int i = 0; i < strong.length; i++) {
+            if (q.contains(strong[i])) return true;
+        }
+        boolean hasKind = q.contains("image of") || q.contains("picture of")
+                || q.contains("photo of") || q.contains("drawing of")
+                || q.contains("painting of") || q.contains("illustration of")
+                || q.contains("poster of");
+        boolean hasVerb = q.contains("create") || q.contains("generate")
+                || q.contains("make") || q.contains("draw") || q.contains("paint")
+                || q.contains("banao") || q.contains("show me") || q.contains("i want");
+        if (hasKind && hasVerb) return true;
+        if (q.startsWith("draw ") || q.startsWith("paint ") || q.startsWith("sketch ")) return true;
+        return false;
+    }
+
+    /** strip the "create an image of ..." wrapper, keep the actual scene */
+    static String cleanImagePrompt(String raw) {
+        String p = raw == null ? "" : raw.trim();
+        String low = p.toLowerCase(java.util.Locale.US);
+        if (low.startsWith("🎨")) {
+            p = p.substring("🎨".length()).trim();
+            low = p.toLowerCase(java.util.Locale.US);
+        }
+        String[] pre = {
+            "please create an image of", "please create a image of",
+            "please generate an image of", "please generate a image of",
+            "please make an image of", "please make a image of",
+            "create an image of", "create a image of", "create image of",
+            "generate an image of", "generate a image of", "generate image of",
+            "make an image of", "make a image of", "make image of",
+            "create a picture of", "generate a picture of", "make a picture of",
+            "create a photo of", "generate a photo of", "make a photo of",
+            "draw a picture of", "draw an image of", "draw a image of",
+            "draw ", "paint ", "sketch ",
+            "create an image", "create a image", "create image",
+            "generate an image", "generate a image", "generate image",
+            "make an image", "make a image", "make image",
+            "image banao", "tasveer banao", "photo banao",
+            "please create", "please ",
+            "/imagine", "/image", "image:", "image of"
+        };
+        for (int i = 0; i < pre.length; i++) {
+            if (low.startsWith(pre[i])) {
+                p = p.substring(pre[i].length()).trim();
+                break;
+            }
+        }
+        String low2 = p.toLowerCase(java.util.Locale.US);
+        String[] suf = {"ki image banao", "image banao", "ki tasveer banao",
+                "tasveer banao", "photo banao", "picture banao"};
+        for (int i = 0; i < suf.length; i++) {
+            if (low2.endsWith(suf[i])) {
+                p = p.substring(0, p.length() - suf[i].length()).trim();
+                break;
+            }
+        }
+        if (p.endsWith(".")) p = p.substring(0, p.length() - 1).trim();
+        return p.length() < 3 ? (raw == null ? "" : raw.trim()) : p;
+    }
+
+    /** 🎨 text-to-image via Pollinations (free, no key) — 3 endpoints, first success wins */
+    private void generateImage(final String prompt, String display) {
+        if (busy) return;
+        msgs.add(new Msg("user", display, false));
         final Msg work = new Msg("ai", getString(R.string.ai_image_gen), false);
         msgs.add(work);
         adapter.notifyDataSetChanged();
         list.smoothScrollToPosition(msgs.size() - 1);
         busy = true;
+        imgCancelled = false;
         sendIcon.setImageResource(R.drawable.ic_stop);
         new Thread(new Runnable() {
             @Override public void run() {
-                try {
-                    String url = "https://image.pollinations.ai/prompt/"
-                            + URLEncoder.encode(prompt, "UTF-8")
-                            + "?width=768&height=768&nologo=true&model=flux";
-                    final byte[] bytes = WebApi.getBytes(url);
-                    final Bitmap bmp = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
-                    runOnUiThread(new Runnable() {
-                        @Override public void run() {
-                            busy = false;
-                            sendIcon.setImageResource(R.drawable.ic_send);
-                            if (bmp == null) {
-                                work.text = getString(R.string.ai_image_fail, "bad image data");
-                            } else {
-                                work.text = null;
-                                work.img = bmp;
-                            }
-                            adapter.notifyDataSetChanged();
-                            list.smoothScrollToPosition(msgs.size() - 1);
+                String enc = prompt;
+                try { enc = URLEncoder.encode(prompt, "UTF-8"); } catch (Exception ignored) { }
+                int seed = (int) (System.currentTimeMillis() % 100000);
+                String[] urls = {
+                    "https://gen.pollinations.ai/image/" + enc
+                        + "?model=flux&width=768&height=768&seed=" + seed,
+                    "https://gen.pollinations.ai/image/" + enc
+                        + "?width=768&height=768&seed=" + seed,
+                    "https://image.pollinations.ai/prompt/" + enc
+                        + "?width=768&height=768&model=flux&nologo=true&seed=" + seed
+                };
+                Bitmap found = null;
+                String lastErr = "network error";
+                for (int i = 0; i < urls.length && found == null && !imgCancelled; i++) {
+                    try {
+                        byte[] bytes = WebApi.getBytes(urls[i]);
+                        if (bytes != null && bytes.length > 0) {
+                            Bitmap b = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                            if (b != null) found = b;
+                            else lastErr = "bad image data";
                         }
-                    });
-                } catch (final Exception e) {
-                    runOnUiThread(new Runnable() {
-                        @Override public void run() {
-                            busy = false;
-                            sendIcon.setImageResource(R.drawable.ic_send);
-                            work.text = getString(R.string.ai_image_fail,
-                                    e.getMessage() == null ? "network error" : e.getMessage());
-                            adapter.notifyDataSetChanged();
-                        }
-                    });
+                    } catch (Exception e) {
+                        lastErr = e.getMessage() == null ? "network error" : e.getMessage();
+                    }
                 }
+                final Bitmap fb = found;
+                final String fe = lastErr;
+                runOnUiThread(new Runnable() {
+                    @Override public void run() {
+                        busy = false;
+                        sendIcon.setImageResource(R.drawable.ic_send);
+                        if (imgCancelled) {
+                            work.text = "⏹ Stopped.";
+                        } else if (fb != null) {
+                            work.text = "🎨 Here's your image:";
+                            Msg im = new Msg("ai", "[generated image]", false);
+                            im.img = fb;
+                            msgs.add(msgs.indexOf(work) + 1, im);
+                        } else {
+                            work.text = getString(R.string.ai_image_fail, fe);
+                        }
+                        adapter.notifyDataSetChanged();
+                        list.smoothScrollToPosition(msgs.size() - 1);
+                    }
+                });
             }
         }).start();
     }
@@ -338,7 +445,10 @@ public class AiChatActivity extends Activity {
         sb.append("complete self-contained HTML document starting with <!DOCTYPE html>, using ONLY inline CSS ");
         sb.append("(no external files, no JavaScript): dark navy background #0B1E33, accent color #F4772E, ");
         sb.append("white text, card-based grid, big readable headings, in the user's preferred language. ");
-        sb.append("For every normal answer reply with plain text only — never HTML.");
+        sb.append("For every normal answer reply with plain text only — never HTML. ");
+        sb.append("If the user asks for a generated photo/image/drawing, do NOT say you cannot create images — ");
+        sb.append("this app has a built-in image generator: tell them to just send a message like ");
+        sb.append("'Create an image of ...' and the app itself will generate the picture.");
         if (alert != null) {
             sb.append("\n\nCONTEXT — the user is asking about this alert:");
             sb.append("\nTitle: ").append(alert.title);
