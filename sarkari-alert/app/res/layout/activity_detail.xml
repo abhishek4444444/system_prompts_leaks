@@ -82,7 +82,7 @@
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:orientation="horizontal" android:layout_marginTop="12dp">
                 <Button android:id="@+id/d_open" android:textAllCaps="false" android:layout_width="0dp" android:layout_weight="1"
-                    android:layout_height="wrap_content" android:text="@string/btn_open"
+                    android:layout_height="wrap_content" android:text="@string/btn_open_inapp"
                     android:textColor="#FFFFFF" android:textSize="13sp"
                     android:background="@drawable/bg_button_dark"/>
                 <Button android:id="@+id/d_share" android:textAllCaps="false" android:layout_width="0dp" android:layout_weight="1"
@@ -90,6 +90,11 @@
                     android:textColor="@color/accent_dark" android:textSize="13sp"
                     android:background="@drawable/bg_button_outline" android:layout_marginLeft="8dp"/>
             </LinearLayout>
+
+            <Button android:id="@+id/d_ai" android:textAllCaps="false" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:text="@string/btn_ask_ai"
+                android:textColor="#FFFFFF" android:textSize="14sp" android:textStyle="bold"
+                android:background="@drawable/bg_button_primary" android:layout_marginTop="10dp"/>
 
             <Button android:id="@+id/d_save" android:textAllCaps="false" android:layout_width="match_parent"
                 android:layout_height="wrap_content" android:text="@string/btn_save"

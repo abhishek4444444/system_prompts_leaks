@@ -69,10 +69,20 @@ public class DetailActivity extends Activity {
                     return;
                 }
                 try {
-                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(alert.url)));
+                    Intent i = new Intent(DetailActivity.this, BrowserActivity.class);
+                    i.putExtra("url", alert.url);
+                    startActivity(i);
                 } catch (Exception e) {
                     Toast.makeText(DetailActivity.this, R.string.error_no_url, Toast.LENGTH_SHORT).show();
                 }
+            }
+        });
+
+        findViewById(R.id.d_ai).setOnClickListener(new View.OnClickListener() {
+            @Override public void onClick(View v) {
+                Intent i = new Intent(DetailActivity.this, AiChatActivity.class);
+                i.putExtra("alert_id", alert.id);
+                startActivity(i);
             }
         });
 
@@ -122,10 +132,11 @@ public class DetailActivity extends Activity {
     private void styleSave() {
         if (alert.saved) {
             saveBtn.setText(R.string.btn_saved);
-            saveBtn.setBackgroundResource(R.drawable.bg_button_dark);
+            saveBtn.setBackgroundResource(R.drawable.bg_button_outline);
+            saveBtn.setTextColor(getResources().getColor(R.color.accent_dark));
         } else {
             saveBtn.setText(R.string.btn_save);
-            saveBtn.setBackgroundResource(R.drawable.bg_button_primary);
+            saveBtn.setBackgroundResource(R.drawable.bg_button_dark);
         }
     }
 }

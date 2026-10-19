@@ -79,6 +79,27 @@ public class SettingsActivity extends Activity {
             }
         });
 
+        findViewById(R.id.row_ai).setOnClickListener(new View.OnClickListener() {
+            @Override public void onClick(View v) {
+                startActivity(new Intent(SettingsActivity.this, AiChatActivity.class));
+            }
+        });
+        findViewById(R.id.row_translate).setOnClickListener(new View.OnClickListener() {
+            @Override public void onClick(View v) {
+                startActivity(new Intent(SettingsActivity.this, TranslateActivity.class));
+            }
+        });
+
+        final EditText aiKey = (EditText) findViewById(R.id.ai_key);
+        aiKey.setText(Prefs.apiKey(this));
+        findViewById(R.id.ai_key_save).setOnClickListener(new View.OnClickListener() {
+            @Override public void onClick(View v) {
+                Prefs.setApiKey(SettingsActivity.this, aiKey.getText().toString().trim());
+                Toast.makeText(SettingsActivity.this,
+                        R.string.settings_ai_saved, Toast.LENGTH_SHORT).show();
+            }
+        });
+
         findViewById(R.id.reset_seed).setOnClickListener(new View.OnClickListener() {
             @Override public void onClick(View v) {
                 int n = Seed.load(SettingsActivity.this);

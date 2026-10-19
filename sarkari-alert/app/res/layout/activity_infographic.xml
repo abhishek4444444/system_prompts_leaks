@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="vertical" android:background="#0B1E33">
+
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="horizontal" android:gravity="center_vertical"
+        android:background="@color/primary" android:padding="12dp">
+        <ImageView android:id="@+id/back" android:layout_width="40dp"
+            android:layout_height="40dp" android:src="@drawable/ic_chevron_left"
+            android:padding="8dp" android:background="@drawable/bg_row_ripple"
+            android:contentDescription="Back"/>
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="@string/ai_info_title" android:textColor="#FFFFFF"
+            android:textSize="17sp" android:textStyle="bold"/>
+    </LinearLayout>
+
+    <WebView android:id="@+id/info_web" android:layout_width="match_parent"
+        android:layout_height="0dp" android:layout_weight="1"/>
+</LinearLayout>

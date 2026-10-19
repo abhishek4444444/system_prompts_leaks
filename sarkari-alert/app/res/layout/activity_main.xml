@@ -37,6 +37,25 @@
                     android:textColor="#C9D6E2" android:textSize="11sp" android:layout_marginTop="2dp"
                     android:maxLines="1" android:ellipsize="end"/>
             </LinearLayout>
+            <FrameLayout android:id="@+id/btn_translate" android:layout_width="34dp"
+                android:layout_height="34dp" android:layout_marginRight="7dp"
+                android:background="@drawable/bg_circle_soft"
+                android:foreground="@drawable/bg_row_ripple" android:clickable="true"
+                android:focusable="true" android:contentDescription="@string/tools_translate">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:layout_gravity="center" android:text="अ"
+                    android:textColor="#FFFFFF" android:textSize="15sp" android:textStyle="bold"/>
+            </FrameLayout>
+
+            <FrameLayout android:id="@+id/btn_ai" android:layout_width="34dp"
+                android:layout_height="34dp" android:layout_marginRight="8dp"
+                android:background="@drawable/bg_circle_white"
+                android:foreground="@drawable/bg_row_ripple" android:clickable="true"
+                android:focusable="true" android:contentDescription="@string/tools_ai">
+                <ImageView android:layout_width="17dp" android:layout_height="17dp"
+                    android:layout_gravity="center" android:src="@drawable/ic_ai"/>
+            </FrameLayout>
+
             <FrameLayout android:id="@+id/btn_refresh" android:layout_width="42dp"
                 android:layout_height="42dp" android:background="@drawable/bg_circle_accent"
                 android:foreground="@drawable/bg_row_ripple" android:clickable="true"

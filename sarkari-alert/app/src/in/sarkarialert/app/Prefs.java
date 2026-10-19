@@ -85,6 +85,14 @@ public class Prefs {
         sp(c).edit().putLong("last_seen", t).apply();
     }
 
+    public static String apiKey(Context c) {
+        return sp(c).getString("gemini_key", "");
+    }
+
+    public static void setApiKey(Context c, String k) {
+        sp(c).edit().putString("gemini_key", k).apply();
+    }
+
     public static boolean sitesMigrated(Context c) {
         return sp(c).getBoolean("sites_migrated", false);
     }

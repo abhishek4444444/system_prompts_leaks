@@ -65,7 +65,7 @@ public class NotificationUtil {
                 .build();
     }
 
-    /** instant per-alert notification when something new drops */
+    /** the alert opens straight into the AI assistant, with a Details action */
     public static void notifyNewAlert(Context ctx, Alert a) {
         ensureChannels(ctx);
         String body = "";
@@ -83,7 +83,11 @@ public class NotificationUtil {
                 .setContentTitle(a.title)
                 .setContentText(body)
                 .setStyle(new Notification.BigTextStyle().bigText(body))
-                .setContentIntent(openDetail(ctx, a.id))
+                .setContentIntent(openAi(ctx, a.id))
+                .addAction(new Notification.Action.Builder(
+                        android.graphics.drawable.Icon.createWithResource(ctx, R.drawable.ic_stat),
+                        ctx.getString(R.string.notif_action_details),
+                        openDetail(ctx, a.id)).build())
                 .setWhen(System.currentTimeMillis())
                 .setShowWhen(true)
                 .setCategory(Notification.CATEGORY_EVENT)
@@ -91,6 +95,14 @@ public class NotificationUtil {
                 .build();
         NotificationManager nm = (NotificationManager) ctx.getSystemService(Context.NOTIFICATION_SERVICE);
         nm.notify((int) (2000 + a.id % 100000), n);
+    }
+
+    private static PendingIntent openAi(Context ctx, long alertId) {
+        Intent open = new Intent(ctx, AiChatActivity.class);
+        open.putExtra("alert_id", alertId);
+        open.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        return PendingIntent.getActivity(ctx, (int) (3000 + alertId % 100000), open,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
     }
 
     public static void notify(Context ctx, String channel, String title, String text, long alertId) {

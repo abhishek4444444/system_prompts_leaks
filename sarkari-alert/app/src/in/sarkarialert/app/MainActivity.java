@@ -172,6 +172,18 @@ public class MainActivity extends Activity {
                 doRefresh();
             }
         });
+        findViewById(R.id.btn_translate).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(MainActivity.this, TranslateActivity.class));
+            }
+        });
+        findViewById(R.id.btn_ai).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(MainActivity.this, AiChatActivity.class));
+            }
+        });
 
         tabJobs.setOnClickListener(new View.OnClickListener() {
             @Override public void onClick(View v) { switchMode(MODE_JOBS); }
