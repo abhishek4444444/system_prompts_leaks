@@ -64,6 +64,11 @@ public class AiChatActivity extends Activity {
         findViewById(R.id.back).setOnClickListener(new View.OnClickListener() {
             @Override public void onClick(View v) { finish(); }
         });
+        findViewById(R.id.ai_skills).setOnClickListener(new View.OnClickListener() {
+            @Override public void onClick(View v) {
+                startActivity(new Intent(AiChatActivity.this, SkillsActivity.class));
+            }
+        });
 
         TextView ctx = (TextView) findViewById(R.id.ai_ctx);
         if (alert != null) {
@@ -269,6 +274,8 @@ public class AiChatActivity extends Activity {
                 sb.append("\nPage excerpt: ").append(s);
             }
         }
+        String skills = Prefs.activeSkillsForPrompt(this);
+        if (skills.length() > 0) sb.append("\n\n").append(skills);
         return sb.toString();
     }
 

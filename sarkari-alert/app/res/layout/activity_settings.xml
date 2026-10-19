@@ -139,6 +139,16 @@
                 <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
                     android:text="@string/settings_tools_title" android:textSize="13sp"
                     android:textColor="@color/text_sub" android:textStyle="bold"/>
+                <LinearLayout android:id="@+id/row_skills" android:layout_width="match_parent"
+                    android:layout_height="wrap_content" android:orientation="horizontal"
+                    android:gravity="center_vertical" android:background="@drawable/bg_row_ripple"
+                    android:paddingTop="10dp" android:paddingBottom="10dp">
+                    <TextView android:layout_width="0dp" android:layout_weight="1"
+                        android:layout_height="wrap_content" android:text="@string/settings_skills_row"
+                        android:textSize="15sp" android:textColor="@color/text_main"/>
+                    <ImageView android:layout_width="20dp" android:layout_height="20dp"
+                        android:src="@drawable/ic_chevron_right" android:contentDescription="Open"/>
+                </LinearLayout>
                 <LinearLayout android:id="@+id/row_ai" android:layout_width="match_parent"
                     android:layout_height="wrap_content" android:orientation="horizontal"
                     android:gravity="center_vertical" android:background="@drawable/bg_row_ripple"

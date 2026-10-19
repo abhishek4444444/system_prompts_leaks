@@ -2,7 +2,9 @@ package in.sarkarialert.app;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+
 import org.json.JSONArray;
+import org.json.JSONObject;
 
 public class Prefs {
     private static final String NAME = "sarkari_prefs";
@@ -63,11 +65,12 @@ public class Prefs {
     }
 
     public static void removeSource(Context c, String url) {
-        String[] cur = sources(c);
         java.util.ArrayList<String> list = new java.util.ArrayList<String>();
-        for (String s : cur) if (!s.equals(url)) list.add(s);
+        for (String s : cur(c)) if (!s.equals(url)) list.add(s);
         setSources(c, list.toArray(new String[list.size()]));
     }
+
+    private static String[] cur(Context c) { return sources(c); }
 
     public static boolean firstRun(Context c) {
         return !sp(c).getBoolean("welcomed", false);
@@ -85,12 +88,12 @@ public class Prefs {
         sp(c).edit().putLong("last_seen", t).apply();
     }
 
-    public static boolean desktopMode(Context c) {
-        return sp(c).getBoolean("desktop_mode", false);
+    public static boolean sitesMigrated(Context c) {
+        return sp(c).getBoolean("sites_migrated", false);
     }
 
-    public static void setDesktopMode(Context c, boolean v) {
-        sp(c).edit().putBoolean("desktop_mode", v).apply();
+    public static void setSitesMigrated(Context c) {
+        sp(c).edit().putBoolean("sites_migrated", true).apply();
     }
 
     public static String apiKey(Context c) {
@@ -117,12 +120,48 @@ public class Prefs {
         sp(c).edit().putBoolean("recat_v2", true).apply();
     }
 
-    public static boolean sitesMigrated(Context c) {
-        return sp(c).getBoolean("sites_migrated", false);
+    public static boolean desktopMode(Context c) {
+        return sp(c).getBoolean("desktop_mode", false);
     }
 
-    public static void setSitesMigrated(Context c) {
-        sp(c).edit().putBoolean("sites_migrated", true).apply();
+    public static void setDesktopMode(Context c, boolean v) {
+        sp(c).edit().putBoolean("desktop_mode", v).apply();
+    }
+
+    // ---------- Skills (user-installed AI personas / instructions) ----------
+
+    public static JSONArray skills(Context c) {
+        try {
+            return new JSONArray(sp(c).getString("skills_v1", "[]"));
+        } catch (Exception e) {
+            return new JSONArray();
+        }
+    }
+
+    public static void setSkills(Context c, JSONArray a) {
+        sp(c).edit().putString("skills_v1", a.toString()).apply();
+    }
+
+    /** formatted block injected into the cloud AI system prompt */
+    public static String activeSkillsForPrompt(Context c) {
+        JSONArray arr = skills(c);
+        StringBuilder sb = new StringBuilder();
+        int n = 0;
+        for (int i = 0; i < arr.length(); i++) {
+            JSONObject o = arr.optJSONObject(i);
+            if (o == null || !o.optBoolean("enabled", true)) continue;
+            String content = o.optString("content", "").trim();
+            if (content.length() == 0) continue;
+            if (n == 0) {
+                sb.append("ACTIVE SKILLS installed by the user — follow them precisely ");
+                sb.append("for tone, style, format and behavior in every answer:\n\n");
+            }
+            sb.append("[SKILL: ").append(o.optString("name", "skill")).append("]\n");
+            sb.append(content.length() > 4000 ? content.substring(0, 4000) + "…" : content);
+            sb.append("\n\n");
+            n++;
+        }
+        return sb.toString();
     }
 
     public static String[] defaultSources() {

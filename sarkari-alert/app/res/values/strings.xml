@@ -204,4 +204,19 @@
     <string name="brain_cloud">☁ Cloud</string>
     <string name="brain_hint">Kuch bhi poocho… (offline)</string>
     <string name="settings_ai_row">AI Assistant</string>
+    <string name="skills_title">Skills</string>
+    <string name="skills_sub">Apne AI personas &amp; instructions — Brain + Cloud dono use karte hain</string>
+    <string name="skills_add">＋ Add skill</string>
+    <string name="skills_edit">Edit skill</string>
+    <string name="skills_name_hint">Skill name (e.g. My writing style)</string>
+    <string name="skills_content_hint">Paste full skill / prompt here (skill.md content)…</string>
+    <string name="skills_empty">No skills yet.\n\nAdd anything — a persona prompt (like ChatGPT skill.md), writing style, answer format… Cloud AI will FOLLOW it in every reply, and Sarkari Brain will recall it offline.</string>
+    <string name="skills_used_by">Used by: Brain + Cloud AI</string>
+    <string name="skills_disabled">Disabled — switch on to use</string>
+    <string name="skills_save">Save</string>
+    <string name="skills_saved">Skill saved</string>
+    <string name="skills_deleted">Skill deleted</string>
+    <string name="skills_need_both">Name and content dono chahiye</string>
+    <string name="ai_skills">🎯 Skills</string>
+    <string name="settings_skills_row">Skills (AI personas)</string>
 </resources>

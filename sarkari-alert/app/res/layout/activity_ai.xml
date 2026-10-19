@@ -23,6 +23,10 @@
                 android:textSize="11sp" android:textColor="#9FB4C9"
                 android:layout_marginLeft="10dp" android:maxLines="1" android:ellipsize="end"/>
         </LinearLayout>
+        <TextView android:id="@+id/ai_skills" android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:text="@string/ai_skills"
+            android:textColor="#FFD9C2" android:textSize="12sp" android:textStyle="bold"
+            android:background="@drawable/bg_row_ripple" android:padding="6dp"/>
         <TextView android:id="@+id/ai_detail" android:layout_width="wrap_content"
             android:layout_height="wrap_content" android:text="@string/ai_details_action"
             android:textColor="#FFD9C2" android:textSize="12sp" android:textStyle="bold"

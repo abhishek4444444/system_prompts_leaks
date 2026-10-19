@@ -22,7 +22,7 @@ final class OfflineBrain {
 
     static String[] quickChips() {
         return new String[]{"⏳ Deadlines", "🆕 Latest jobs", "📜 Schemes info",
-                "🚂 Railway jobs", "❓ App help"};
+                "🚂 Railway jobs", "❓ App help", "🎯 Skills"};
     }
 
     // ---------- tiny knowledge base ----------
@@ -87,6 +87,10 @@ final class OfflineBrain {
             return "📅 Aaj hai " + new SimpleDateFormat("EEEE, d MMMM yyyy", Locale.ENGLISH)
                     .format(new Date());
         }
+
+        // --- user skills: custom, overrides everything else ---
+        String sk = skillAnswer(s, c);
+        if (sk != null) return sk;
 
         // --- alert-context answers ---
         if (a != null) {
@@ -383,6 +387,41 @@ final class OfflineBrain {
         }
         sb.append("\nKisi ko kholo aur uske baare me aur pooch!");
         return sb.toString();
+    }
+
+    // ---------- user skills (local recall) ----------
+
+    private static String skillAnswer(String s, Context c) {
+        org.json.JSONArray arr = Prefs.skills(c);
+        StringBuilder list = null;
+        for (int i = 0; i < arr.length(); i++) {
+            org.json.JSONObject o = arr.optJSONObject(i);
+            if (o == null) continue;
+            String name = o.optString("name", "");
+            boolean enabled = o.optBoolean("enabled", true);
+            if (s.contains("skill")) {
+                if (list == null) list = new StringBuilder("🎯 Tere added skills:\n\n");
+                list.append("• ").append(name).append(enabled ? "" : " (off)").append("\n");
+            }
+            if (!enabled || name.length() == 0) continue;
+            String low = name.toLowerCase();
+            boolean hit = s.contains(low);
+            if (!hit) {
+                for (String tok : low.split("[^a-z0-9]+")) {
+                    if (tok.length() >= 3 && !"the".equals(tok) && s.contains(tok)) { hit = true; break; }
+                }
+            }
+            if (hit) {
+                return "🎯 " + name + " (tera skill):\n\n" + o.optString("content", "")
+                        + "\n\n— Cloud AI (☁ chip) ye skill fully FOLLOW karta hai.";
+            }
+        }
+        if (list != null) {
+            list.append("\nAdd/edit: 🎯 Skills chip se. Cloud AI inhe apne system me use karta hai, "
+                    + "Brain inhe yaad rakhta hai.");
+            return list.toString();
+        }
+        return null;
     }
 
     // ---------- matching ----------

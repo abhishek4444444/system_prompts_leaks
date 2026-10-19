@@ -64,13 +64,20 @@ public class DetailActivity extends Activity {
 
         findViewById(R.id.d_open).setOnClickListener(new View.OnClickListener() {
             @Override public void onClick(View v) {
-                if (alert.url == null || !alert.url.startsWith("http")) {
-                    Toast.makeText(DetailActivity.this, R.string.error_no_url, Toast.LENGTH_SHORT).show();
-                    return;
+                String target = alert.url;
+                if (target == null || !target.startsWith("http")) {
+                    // no link captured — open a search for the official notice instead of an error
+                    try {
+                        target = "https://html.duckduckgo.com/html/?q=" + java.net.URLEncoder.encode(
+                                alert.title + " official notification apply online", "UTF-8");
+                    } catch (Exception e) {
+                        Toast.makeText(DetailActivity.this, R.string.error_no_url, Toast.LENGTH_SHORT).show();
+                        return;
+                    }
                 }
                 try {
                     Intent i = new Intent(DetailActivity.this, BrowserActivity.class);
-                    i.putExtra("url", alert.url);
+                    i.putExtra("url", target);
                     startActivity(i);
                 } catch (Exception e) {
                     Toast.makeText(DetailActivity.this, R.string.error_no_url, Toast.LENGTH_SHORT).show();

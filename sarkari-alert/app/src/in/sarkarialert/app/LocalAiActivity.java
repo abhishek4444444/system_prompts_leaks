@@ -81,7 +81,13 @@ public class LocalAiActivity extends Activity {
             lp.rightMargin = pad;
             t.setLayoutParams(lp);
             t.setOnClickListener(new View.OnClickListener() {
-                @Override public void onClick(View v) { send(chip.replaceAll("^[^ ]+ ", "")); }
+                @Override public void onClick(View v) {
+                    if (chip.equals("🎯 Skills")) {
+                        startActivity(new Intent(LocalAiActivity.this, SkillsActivity.class));
+                    } else {
+                        send(chip.replaceAll("^[^ ]+ ", ""));
+                    }
+                }
             });
             box.addView(t);
         }

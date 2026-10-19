@@ -12,7 +12,7 @@ public class NotificationUtil {
 
     public static final String CH_REMINDERS = "reminders";
     public static final String CH_DAILY = "daily";
-    public static final String CH_UPDATES = "updates";
+    public static final String CH_UPDATES = "updates_v2"; // v2 = with sound (old channel was silent)
     public static final String CH_MONITOR = "monitor";
     public static final int MONITOR_NOTIFICATION_ID = 42;
 
@@ -23,8 +23,16 @@ public class NotificationUtil {
                     ctx.getString(R.string.channel_reminders), NotificationManager.IMPORTANCE_HIGH));
             nm.createNotificationChannel(new NotificationChannel(CH_DAILY,
                     ctx.getString(R.string.channel_daily), NotificationManager.IMPORTANCE_DEFAULT));
-            nm.createNotificationChannel(new NotificationChannel(CH_UPDATES,
-                    ctx.getString(R.string.channel_daily), NotificationManager.IMPORTANCE_HIGH));
+            NotificationChannel up = new NotificationChannel(CH_UPDATES,
+                    ctx.getString(R.string.channel_daily), NotificationManager.IMPORTANCE_HIGH);
+            up.setSound(android.media.RingtoneManager.getDefaultUri(
+                            android.media.RingtoneManager.TYPE_NOTIFICATION),
+                    new android.media.AudioAttributes.Builder()
+                            .setUsage(android.media.AudioAttributes.USAGE_NOTIFICATION)
+                            .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                            .build());
+            nm.createNotificationChannel(up);
+            nm.deleteNotificationChannel("updates"); // legacy silent channel, clean up
             // silent persistent notification for the live monitor
             NotificationChannel mon = new NotificationChannel(CH_MONITOR,
                     ctx.getString(R.string.channel_monitor), NotificationManager.IMPORTANCE_LOW);
