@@ -2,7 +2,7 @@
 
 Sarkari naukri, exam aur online form ke alerts — ek hi Android app me, Hindi UI ke saath, bina ads.
 
-**Final APK:** `dist/SarkariAlert-v1.0.2.apk` (~100 KB) — [GitHub Release se download karo](https://github.com/abhishek4444444/system_prompts_leaks/releases/tag/v1.0) ya is repo ke `sarkari-alert/dist/` folder se lo.
+**Final APK:** `dist/SarkariAlert-v1.0.3.apk` (~100 KB) — [GitHub Release se download karo](https://github.com/abhishek4444444/system_prompts_leaks/releases/tag/v1.0) ya is repo ke `sarkari-alert/dist/` folder se lo.
 
 ## Features
 

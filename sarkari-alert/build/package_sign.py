@@ -148,14 +148,19 @@ def _feed_chunks(h, region):
         h.update(b"\xa5" + u32(len(chunk)) + chunk)
 
 def content_digest(regions):
-    """single chunked SHA-256 over all regions in order (APK Sig v2 spec):
-    0xa5+len+chunk for every 1MB chunk of every region, then 0x5a+u64(total)."""
-    h = hashlib.sha256()
-    total = 0
+    """APK Sig v2 CHUNKED_SHA256, per AOSP ApkSigningBlockUtils:
+    1. each region -> 1MB chunks (last may be shorter, no cross-region chunks)
+    2. per-chunk digest = sha256(0xa5 + u32le(len) + chunk)
+    3. final digest = sha256(0x5a + u32le(chunk_count) + concat(per-chunk digests))"""
+    chunk_digests = []
     for r in regions:
-        _feed_chunks(h, r)
-        total += len(r)
-    h.update(b"\x5a" + u64(total))
+        for i in range(0, len(r), CHUNK):
+            chunk = r[i:i + CHUNK]
+            chunk_digests.append(hashlib.sha256(b"\xa5" + u32(len(chunk)) + chunk).digest())
+    prefix = b"\x5a" + u32(len(chunk_digests))
+    h = hashlib.sha256(prefix)
+    for d in chunk_digests:
+        h.update(d)
     return h.digest()
 
 def repack(base_bytes, dex_bytes, **kw):
