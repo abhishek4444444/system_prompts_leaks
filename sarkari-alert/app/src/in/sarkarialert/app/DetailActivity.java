@@ -82,10 +82,10 @@ public class DetailActivity extends Activity {
                 sb.append("📢 ").append(alert.title).append("\n");
                 if (alert.org.length() > 0) sb.append("🏛 ").append(alert.org).append("\n");
                 if (alert.lastDate.length() >= 10) {
-                    sb.append("⏳ अंतिम तिथि: ").append(AlarmScheduler.prettyDate(alert.lastDate)).append("\n");
+                    sb.append("⏳ Last date: ").append(AlarmScheduler.prettyDate(alert.lastDate)).append("\n");
                 }
                 if (alert.url.length() > 0) sb.append("🔗 ").append(alert.url).append("\n");
-                sb.append("\n(Sarkari Alert app se share kiya)");
+                sb.append("\n(shared from Sarkari Alert app)");
                 Intent s = new Intent(Intent.ACTION_SEND);
                 s.setType("text/plain");
                 s.putExtra(Intent.EXTRA_TEXT, sb.toString());

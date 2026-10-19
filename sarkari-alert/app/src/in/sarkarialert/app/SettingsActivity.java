@@ -43,12 +43,24 @@ public class SettingsActivity extends Activity {
             @Override public void onClick(View v) {
                 String u = feedUrl.getText().toString().trim();
                 if (u.length() == 0 || !(u.startsWith("http://") || u.startsWith("https://"))) {
-                    Toast.makeText(SettingsActivity.this, "सही URL लिखें (https://…)", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(SettingsActivity.this,
+                            "Enter a valid URL (https://…)", Toast.LENGTH_SHORT).show();
                     return;
                 }
                 Prefs.addSource(SettingsActivity.this, u);
                 feedUrl.setText("");
                 renderFeeds();
+            }
+        });
+
+        findViewById(R.id.dev_ig).setOnClickListener(new View.OnClickListener() {
+            @Override public void onClick(View v) {
+                openUrl("https://www.instagram.com/primeedit.in/");
+            }
+        });
+        findViewById(R.id.dev_yt).setOnClickListener(new View.OnClickListener() {
+            @Override public void onClick(View v) {
+                openUrl("https://www.youtube.com/results?search_query=Prime+edit+in");
             }
         });
 
@@ -61,6 +73,15 @@ public class SettingsActivity extends Activity {
         });
 
         renderFeeds();
+    }
+
+    private void openUrl(String url) {
+        try {
+            startActivity(new android.content.Intent(android.content.Intent.ACTION_VIEW,
+                    android.net.Uri.parse(url)));
+        } catch (Exception e) {
+            Toast.makeText(this, "No browser found", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void renderFeeds() {

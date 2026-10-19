@@ -9,13 +9,14 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.GZIPInputStream;
 
 public class FeedLoader {
 
     public interface Callback {
-        void onDone(int added, int sources, boolean anySuccess);
+        void onDone(int added, int sources, boolean anySuccess, List<Alert> fresh);
     }
 
     public static void refresh(final Context ctx, final Handler ui, final Callback cb) {
@@ -25,6 +26,7 @@ public class FeedLoader {
             public void run() {
                 final Db db = new Db(ctx);
                 int added = 0, ok = 0;
+                final List<Alert> fresh = new ArrayList<Alert>();
                 for (String surl : sources) {
                     try {
                         String body = fetch(surl);
@@ -32,7 +34,10 @@ public class FeedLoader {
                         for (Alert a : alerts) {
                             String iso = FeedParser.isoDate(a.lastDate);
                             if (iso.length() > 0) a.lastDate = iso;
-                            if (db.upsert(a)) added++;
+                            if (db.upsert(a)) {
+                                added++;
+                                fresh.add(a);
+                            }
                         }
                         ok++;
                     } catch (Exception e) {
@@ -45,7 +50,7 @@ public class FeedLoader {
                 ui.post(new Runnable() {
                     @Override
                     public void run() {
-                        cb.onDone(fAdded, sources.length, success);
+                        cb.onDone(fAdded, sources.length, success, fresh);
                     }
                 });
             }
@@ -55,13 +60,14 @@ public class FeedLoader {
     public static String fetch(String surl) throws Exception {
         URL u = new URL(surl);
         HttpURLConnection conn = (HttpURLConnection) u.openConnection();
-        conn.setConnectTimeout(12000);
-        conn.setReadTimeout(12000);
+        conn.setConnectTimeout(10000);
+        conn.setReadTimeout(10000);
         conn.setInstanceFollowRedirects(true);
         conn.setRequestProperty("User-Agent",
-                "Mozilla/5.0 (Linux; Android 12) AppleWebKit/537.36 SarkariAlert/1.0");
+                "Mozilla/5.0 (Linux; Android 12) AppleWebKit/537.36 SarkariAlert/1.1");
         conn.setRequestProperty("Accept-Encoding", "gzip");
         conn.setRequestProperty("Accept", "application/rss+xml, application/json, application/xml, text/xml, */*");
+        conn.setRequestProperty("Cache-Control", "no-cache");
         InputStream in = conn.getInputStream();
         try {
             String enc = conn.getContentEncoding();

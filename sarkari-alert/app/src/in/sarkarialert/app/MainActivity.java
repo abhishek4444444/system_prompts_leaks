@@ -108,6 +108,16 @@ public class MainActivity extends Activity {
         if (System.currentTimeMillis() - Prefs.lastRefresh(this) > 6 * 3600000L) {
             doRefresh();
         }
+        startMonitorService();
+    }
+
+    private void startMonitorService() {
+        android.content.Intent svc = new android.content.Intent(this, MonitorService.class);
+        if (android.os.Build.VERSION.SDK_INT >= 26) {
+            startForegroundService(svc);
+        } else {
+            startService(svc);
+        }
     }
 
     @Override
@@ -177,7 +187,7 @@ public class MainActivity extends Activity {
             when = d;
         }
         status.setText(getString(R.string.last_updated, when)
-                + "  ·  " + db.count() + " अलर्ट" + (extra == null ? "" : "  ·  " + extra));
+                + "  ·  " + db.count() + " alerts" + (extra == null ? "" : "  ·  " + extra));
     }
 
     private void doRefresh() {
@@ -186,7 +196,7 @@ public class MainActivity extends Activity {
         status.setText(R.string.refreshing);
         FeedLoader.refresh(this, ui, new FeedLoader.Callback() {
             @Override
-            public void onDone(int added, int sources, boolean anySuccess) {
+            public void onDone(int added, int sources, boolean anySuccess, java.util.List<Alert> fresh) {
                 refreshing = false;
                 String msg;
                 if (!anySuccess) {

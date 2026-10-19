@@ -6,15 +6,16 @@ import android.content.Intent;
 import android.os.Handler;
 import android.os.Looper;
 
+import java.util.List;
+
 public class DailyReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(final Context ctx, Intent intent) {
         if (!Prefs.dailyEnabled(ctx)) return;
-        final int before = new Db(ctx).count();
         final Context app = ctx.getApplicationContext();
         FeedLoader.refresh(app, new Handler(Looper.getMainLooper()), new FeedLoader.Callback() {
             @Override
-            public void onDone(int added, int sources, boolean anySuccess) {
+            public void onDone(int added, int sources, boolean anySuccess, List<Alert> fresh) {
                 Db db = new Db(app);
                 db.cleanup(120);
                 AlarmScheduler.scheduleDaily(app);

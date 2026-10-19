@@ -70,6 +70,9 @@ public class Prefs {
     }
 
     public static String[] defaultSources() {
-        return new String[]{"https://sarkariresult.com.cm/feed/"};
+        return new String[]{
+                "https://sarkariresult.com.cm/feed/",
+                "https://freejobalerts.app/feed.xml"
+        };
     }
 }
