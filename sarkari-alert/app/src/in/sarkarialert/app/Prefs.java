@@ -101,6 +101,14 @@ public class Prefs {
         sp(c).edit().putString("gemini_key", k).apply();
     }
 
+    public static boolean nationalSeeded(Context c) {
+        return sp(c).getBoolean("national_seeded", false);
+    }
+
+    public static void setNationalSeeded(Context c) {
+        sp(c).edit().putBoolean("national_seeded", true).apply();
+    }
+
     public static boolean sitesMigrated(Context c) {
         return sp(c).getBoolean("sites_migrated", false);
     }

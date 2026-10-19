@@ -149,7 +149,7 @@
     <string name="ai_title">AI Assistant</string>
     <string name="ai_details_action">Details</string>
     <string name="ai_setup_title">Connect your free AI key</string>
-    <string name="ai_setup_sub">The assistant runs on Google Gemini. Get a free API key from Google AI Studio (2 minutes), paste it below — done.</string>
+    <string name="ai_setup_sub">Paste ANY provider key - Gemini, Groq, DeepSeek, OpenAI or OpenRouter. The provider is auto-detected from the key format. Free keys: aistudio.google.com / console.groq.com / platform.deepseek.com</string>
     <string name="ai_key_hint">Paste your Gemini API key (AIza…)</string>
     <string name="ai_get_key">Get free key</string>
     <string name="ai_save_start">Save &amp; start</string>
@@ -162,6 +162,7 @@
     <string name="ai_quick_summary">Short summary</string>
     <string name="ai_quick_info">Make an infographic</string>
     <string name="ai_quick_hindi">Answer in Hindi</string>
+    <string name="ai_quick_local">⚡ Local instant</string>
     <string name="ai_hello">Hi! I am your Sarkari Alert assistant. Ask me about any government job, exam, form or scheme — I can explain, summarize, translate to Hindi or build an infographic.</string>
     <string name="ai_hello_alert">Hi! I have opened this alert for you. Ask me anything about it — "what is this?", "explain simply", "last date kab hai?", or get a summary / infographic.</string>
     <string name="ai_hello_page">Hi! I have read the page you were browsing. Ask me anything about it — I can summarize it or explain in Hindi.</string>

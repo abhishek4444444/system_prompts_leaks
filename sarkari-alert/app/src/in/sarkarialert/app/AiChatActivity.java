@@ -140,7 +140,7 @@ public class AiChatActivity extends Activity {
         box.removeAllViews();
         String[] labels = {getString(R.string.ai_quick_what), getString(R.string.ai_quick_explain),
                 getString(R.string.ai_quick_summary), getString(R.string.ai_quick_info),
-                getString(R.string.ai_quick_hindi)};
+                getString(R.string.ai_quick_hindi), getString(R.string.ai_quick_local)};
         for (String label : labels) {
             TextView chip = new TextView(this);
             chip.setText(label);
@@ -154,7 +154,11 @@ public class AiChatActivity extends Activity {
             lp.rightMargin = (int) dp(8);
             chip.setLayoutParams(lp);
             chip.setOnClickListener(new View.OnClickListener() {
-                @Override public void onClick(View v) { send(((TextView) v).getText().toString()); }
+                @Override public void onClick(View v) {
+                    String t = ((TextView) v).getText().toString();
+                    if (t.equals(getString(R.string.ai_quick_local))) sendLocal();
+                    else send(t);
+                }
             });
             box.addView(chip);
         }
@@ -163,13 +167,18 @@ public class AiChatActivity extends Activity {
     private void send(String text) {
         final String question = text == null ? "" : text.trim();
         if (question.length() == 0 || busy) return;
-        final String key = Prefs.apiKey(this);
-        if (key.length() == 0) {
-            showSetup();
-            return;
-        }
         input.setText("");
         msgs.add(new Msg("user", question, false));
+        adapter.notifyDataSetChanged();
+
+        final String key = Prefs.apiKey(this);
+        if (key.length() == 0) {
+            // no cloud key — the LOCAL brain answers instantly, offline
+            msgs.add(new Msg("ai", OfflineBrain.answer(question, alert, this), false));
+            adapter.notifyDataSetChanged();
+            list.smoothScrollToPosition(msgs.size() - 1);
+            return;
+        }
         final Msg typing = new Msg("ai", getString(R.string.ai_thinking), false);
         msgs.add(typing);
         adapter.notifyDataSetChanged();
@@ -181,7 +190,11 @@ public class AiChatActivity extends Activity {
         for (int i = from; i < msgs.size() - 1; i++) {
             hist.add(new String[]{msgs.get(i).role, msgs.get(i).text});
         }
-        Gemini.ask(key, buildSystem(), hist, new Gemini.Cb() {
+        Llm.ask(key, buildSystem(), hist, new Llm.StreamCb() {
+            @Override public void onDelta(final String soFar) {
+                typing.text = soFar;
+                adapter.notifyDataSetChanged();
+            }
             @Override public void done(String reply, String err) {
                 busy = false;
                 msgs.remove(typing);
@@ -195,6 +208,18 @@ public class AiChatActivity extends Activity {
                 list.smoothScrollToPosition(msgs.size() - 1);
             }
         });
+    }
+
+    /** ⚡ local chip: instant on-device answer, no key, no internet */
+    private void sendLocal() {
+        if (busy) return;
+        String q = input.getText().toString().trim();
+        if (q.length() == 0) q = "summary";
+        input.setText("");
+        msgs.add(new Msg("user", q, false));
+        msgs.add(new Msg("ai", OfflineBrain.answer(q, alert, this), false));
+        adapter.notifyDataSetChanged();
+        list.smoothScrollToPosition(msgs.size() - 1);
     }
 
     private String buildSystem() {
