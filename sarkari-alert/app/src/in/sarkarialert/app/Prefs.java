@@ -69,6 +69,14 @@ public class Prefs {
         setSources(c, list.toArray(new String[list.size()]));
     }
 
+    public static long lastSeen(Context c) {
+        return sp(c).getLong("last_seen", 0L);
+    }
+
+    public static void setLastSeen(Context c, long t) {
+        sp(c).edit().putLong("last_seen", t).apply();
+    }
+
     public static boolean sitesMigrated(Context c) {
         return sp(c).getBoolean("sites_migrated", false);
     }

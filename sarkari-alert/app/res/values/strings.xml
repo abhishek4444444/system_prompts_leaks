@@ -3,6 +3,7 @@
     <string name="app_name">Sarkari Alert</string>
     <string name="tagline">Government job &amp; form alerts — instantly</string>
     <string name="refresh">Refresh</string>
+    <string name="new_pill_text">%1$d new — tap to view</string>
     <string name="search_hint">Search… (e.g. RRB, Teacher, UPSSSC)</string>
     <string name="tab_jobs">Jobs</string>
     <string name="tab_saved">Saved</string>

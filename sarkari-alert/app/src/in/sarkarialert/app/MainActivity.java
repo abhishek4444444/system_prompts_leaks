@@ -13,6 +13,7 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.TypedValue;
 import android.view.Gravity;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AlphaAnimation;
@@ -48,6 +49,15 @@ public class MainActivity extends Activity {
     private boolean refreshing = false;
 
     private ListView list;
+    private RefreshRing btnRing, pullRing;
+    private TextView newPill;
+    private final Runnable ticker = new Runnable() {
+        @Override
+        public void run() {
+            updateStatus(null);
+            ui.postDelayed(ticker, 30000);
+        }
+    };
     private TextView empty, status, subtitle;
     private LinearLayout chips;
     private View chipsScroll, watchHeader;
@@ -74,6 +84,28 @@ public class MainActivity extends Activity {
 
         SiteMonitor.ensureDefaults(this);
         requestNotificationPermission();
+
+        btnRing = (RefreshRing) findViewById(R.id.btn_ring);
+        pullRing = (RefreshRing) findViewById(R.id.pull_ring);
+        newPill = (TextView) findViewById(R.id.new_pill);
+        btnRing.setColor(0xFFFFFFFF);
+        setupPullToRefresh();
+        newPill.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Prefs.setLastSeen(MainActivity.this, System.currentTimeMillis());
+                newPill.setVisibility(View.GONE);
+                if (mode == MODE_WATCH) switchMode(MODE_JOBS);
+                else if (mode == MODE_SAVED) switchMode(MODE_JOBS);
+                else reloadAlerts();
+                list.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        list.smoothScrollToPosition(0);
+                    }
+                });
+            }
+        });
 
         // pulsing live dot
         AlphaAnimation pulse = new AlphaAnimation(1f, 0.25f);
@@ -177,6 +209,91 @@ public class MainActivity extends Activity {
         super.onResume();
         if (mode == MODE_WATCH) loadWatch();
         else reloadAlerts();
+        showNewPillIfAny();
+        ui.removeCallbacks(ticker);
+        ui.postDelayed(ticker, 30000);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        ui.removeCallbacks(ticker);
+    }
+
+    /** YouTube-style pull gesture on the list: elastic ring, release to refresh */
+    private void setupPullToRefresh() {
+        list.setOnTouchListener(new View.OnTouchListener() {
+            float startY;
+            boolean pulling;
+            float pullPx;
+
+            @Override
+            public boolean onTouch(View v, MotionEvent ev) {
+                switch (ev.getActionMasked()) {
+                    case MotionEvent.ACTION_DOWN:
+                        startY = ev.getY();
+                        pulling = false;
+                        break;
+                    case MotionEvent.ACTION_MOVE: {
+                        boolean atTop = list.getFirstVisiblePosition() == 0
+                                && (list.getChildAt(0) == null
+                                    || list.getChildAt(0).getTop() >= 0);
+                        float dy = ev.getY() - startY;
+                        if (!pulling && atTop && dy > dp(14) && !refreshing) {
+                            pulling = true;
+                        }
+                        if (pulling) {
+                            pullPx = Math.max(0, dy - dp(14)) / 2f; // rubber band
+                            float max = dp(92);
+                            if (pullPx > max) pullPx = max;
+                            pullRing.setVisibility(View.VISIBLE);
+                            pullRing.setAlpha(1f);
+                            pullRing.setTranslationY(-dp(64) + pullPx);
+                            pullRing.setPull(pullPx / max);
+                            return true;
+                        }
+                        break;
+                    }
+                    case MotionEvent.ACTION_UP:
+                    case MotionEvent.ACTION_CANCEL:
+                        if (pulling) {
+                            pulling = false;
+                            if (pullPx >= dp(62) && !refreshing) {
+                                pullRing.setSpinning(true);
+                                pullRing.animate().translationY(-dp(10)).setDuration(180).start();
+                                doRefresh();
+                            } else {
+                                collapsePull();
+                            }
+                            return true;
+                        }
+                        break;
+                }
+                return false;
+            }
+        });
+    }
+
+    private void collapsePull() {
+        pullRing.setSpinning(false);
+        pullRing.setPull(0);
+        pullRing.animate().translationY(-dp(64)).alpha(0f).setDuration(200)
+                .withEndAction(new Runnable() {
+                    @Override
+                    public void run() {
+                        pullRing.setVisibility(View.GONE);
+                    }
+                }).start();
+    }
+
+    private void showNewPillIfAny() {
+        int n = new Db(this).countNewerThan(Prefs.lastSeen(this));
+        if (n > 0 && mode != MODE_WATCH) {
+            newPill.setText(getString(R.string.new_pill_text, n));
+            newPill.setVisibility(View.VISIBLE);
+        } else {
+            newPill.setVisibility(View.GONE);
+        }
     }
 
     private void requestNotificationPermission() {
@@ -364,18 +481,35 @@ public class MainActivity extends Activity {
         if (refreshing) return;
         refreshing = true;
         status.setText(R.string.refreshing);
-        NetWatcher.refreshOnce(this);
-        // observe completion by a light delayed re-render (fetch runs detached)
-        ui.postDelayed(new Runnable() {
+        btnRing.setSpinning(true);
+        NetWatcher.uiListener = new Runnable() {
             @Override
             public void run() {
                 refreshing = false;
-                String msg = null;
+                btnRing.setSpinning(false);
+                collapsePull();
                 if (mode == MODE_WATCH) loadWatch();
                 else reloadAlerts();
-                updateStatus(msg);
+                showNewPillIfAny();
+                updateStatus(null);
             }
-        }, 6000);
+        };
+        NetWatcher.refreshOnce(this);
+        // safety net: if no callback arrived (all sources unreachable), settle anyway
+        ui.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                if (refreshing) {
+                    refreshing = false;
+                    btnRing.setSpinning(false);
+                    collapsePull();
+                    if (mode == MODE_WATCH) loadWatch();
+                    else reloadAlerts();
+                    showNewPillIfAny();
+                    updateStatus(null);
+                }
+            }
+        }, 12000);
     }
 
     private float dp(float v) {

@@ -22,6 +22,9 @@ public final class NetWatcher {
     private static boolean registered = false;
     private static boolean refreshing = false;
 
+    /** UI (if visible) is notified exactly when a fetch cycle completes */
+    public static volatile Runnable uiListener;
+
     private NetWatcher() {}
 
     /** idempotent: safe to call from activity, receiver, job — registers once per process */
@@ -72,6 +75,9 @@ public final class NetWatcher {
                         shown++;
                     }
                 }
+                Runnable r = uiListener;
+                uiListener = null;
+                if (r != null) UI.post(r);
             }
         });
     }

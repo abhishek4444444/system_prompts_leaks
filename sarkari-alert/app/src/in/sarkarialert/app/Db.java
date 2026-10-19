@@ -113,6 +113,14 @@ public class Db extends SQLiteOpenHelper {
         return n;
     }
 
+    public int countNewerThan(long t) {
+        Cursor c = getReadableDatabase().rawQuery(
+                "SELECT COUNT(*) FROM alerts WHERE created_at>?", new String[]{String.valueOf(t)});
+        int n = c.moveToFirst() ? c.getInt(0) : 0;
+        c.close();
+        return n;
+    }
+
     public long getCreated(long id) {
         Cursor c = getReadableDatabase().rawQuery(
                 "SELECT created_at FROM alerts WHERE _id=?", new String[]{String.valueOf(id)});
